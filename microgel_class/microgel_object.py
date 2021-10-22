@@ -29,12 +29,18 @@ class Microgel:
 
         vec_pos_list = [[0, 0, 0],                  # 0
                         [a/2, a/2, 0],              # 1
-                        [a/4, a/4, a/4],            # 2
-                        [a/4+a/2, a/4+a/2, a/4],    # 3
-                        [0, a/2, a/2],              # 4
+                        [a, a, 0],                  # 2
+                        [a/4, a/4, a/4],            # 3
+                        [a/4+a/2, a/4+a/2, a/4],    # 4
                         [a/2, 0, a/2],              # 5
-                        [a/4, a-a/4, a-a/4],        # 6
-                        [a-a/4, a/4, a-a/4]]        # 7
+                        [0, a/2, a/2],              # 6
+                        [a/2, a, a/2],              # 7
+                        [a, a/2, a/2],              # 8
+                        [a/4, a-a/4, a-a/4],        # 9
+                        [a-a/4, a/4, a-a/4],        # 10
+                        [0, a, a],                  # 11
+                        [a/2, a/2, a],              # 12
+                        [a, 0, a]]                  # 13
 
         for vec_pos in vec_pos_list:
             self.system.part.add(id=id_num, pos=np.array(vec_pos)+np.array(shift), type=bead_type)
@@ -53,21 +59,35 @@ class Microgel:
         """
         id_armbeads_in_cell = []
 
-        crosslinks_pairs = [[id_crosslinks_in_cell[0], id_crosslinks_in_cell[2]],
-                            [id_crosslinks_in_cell[2], id_crosslinks_in_cell[1]],
-                            [id_crosslinks_in_cell[1], id_crosslinks_in_cell[3]],
+        crosslinks_pairs = [[id_crosslinks_in_cell[0], id_crosslinks_in_cell[3]],
+                            [id_crosslinks_in_cell[3], id_crosslinks_in_cell[1]],
+                            [id_crosslinks_in_cell[1], id_crosslinks_in_cell[4]],
                             [id_crosslinks_in_cell[4], id_crosslinks_in_cell[2]],
-                            [id_crosslinks_in_cell[5], id_crosslinks_in_cell[2]],
-                            [id_crosslinks_in_cell[6], id_crosslinks_in_cell[4]],
-                            [id_crosslinks_in_cell[5], id_crosslinks_in_cell[7]]]
+                            [id_crosslinks_in_cell[3], id_crosslinks_in_cell[5]],
+                            [id_crosslinks_in_cell[3], id_crosslinks_in_cell[6]],
+                            [id_crosslinks_in_cell[4], id_crosslinks_in_cell[8]],
+                            [id_crosslinks_in_cell[4], id_crosslinks_in_cell[7]],
+                            [id_crosslinks_in_cell[5], id_crosslinks_in_cell[10]],
+                            [id_crosslinks_in_cell[6], id_crosslinks_in_cell[9]],
+                            [id_crosslinks_in_cell[7], id_crosslinks_in_cell[9]],
+                            [id_crosslinks_in_cell[8], id_crosslinks_in_cell[10]],
+                            [id_crosslinks_in_cell[10], id_crosslinks_in_cell[13]],
+                            [id_crosslinks_in_cell[10], id_crosslinks_in_cell[12]],
+                            [id_crosslinks_in_cell[9], id_crosslinks_in_cell[12]],
+                            [id_crosslinks_in_cell[9], id_crosslinks_in_cell[11]]]
 
         for pairs in crosslinks_pairs:
             diff_vec = self.system.part[pairs[1]].pos - self.system.part[pairs[0]].pos
 
-            for i in range(1,Nbeads_arm+1):
+            iter_init = 1
+            iter_end = Nbeads_arm+1
+            for i in range(iter_init,iter_end):
                 vec_pos = self.system.part[pairs[0]].pos + diff_vec * i / (Nbeads_arm + 1)
                 self.system.part.add(id=id_num, pos=vec_pos, type=10)
                 id_armbeads_in_cell.append(id_num)
+                # if i == iter_init:
+                #     self.system.part[pairs[0]].add_bond((fene, id_num))
+                # elif i==iter_end
                 id_num += 1
 
         return id_num, id_armbeads_in_cell
@@ -85,12 +105,8 @@ class Microgel:
         
     #     for cell_pair in cell_pairs:
             
-    #         crosslinks_pairs = [[id_crosslinks_matrix[cell_pair[0]][], id_crosslinks_matrix[cell_pair[1]][]],
-    #                             [id_crosslinks_matrix[cell_pair[0]][], id_crosslinks_matrix[cell_pair[1]][]],
-    #                             [id_crosslinks_matrix[cell_pair[0]][], id_crosslinks_matrix[cell_pair[1]][]],
-    #                             [id_crosslinks_matrix[cell_pair[0]][], id_crosslinks_matrix[cell_pair[1]][]],
-    #                             [id_crosslinks_matrix[cell_pair[0]][], id_crosslinks_matrix[cell_pair[1]][]],
-    #                             [id_crosslinks_matrix[cell_pair[0]][], id_crosslinks_matrix[cell_pair[1]][]],
+    #         crosslinks_pairs = [[id_crosslinks_matrix[cell_pair[0]][3], id_crosslinks_matrix[cell_pair[1]][5]],
+    #                             [id_crosslinks_matrix[cell_pair[0]][6], id_crosslinks_matrix[cell_pair[1]][5]]
     #                             ]
 
 
@@ -112,7 +128,8 @@ class Microgel:
         id_crosslinks_matrix = []
 
         # shift_list = [[0, 0, 0], [a, 0, 0], [0, a, 0], [0, 0, a]]
-        shift_list = [[0, 0, 0], [a, 0, 0], [2*a, 0, 0]]#, [0, a, 0], [a, a, 0], [2*a, a, 0]]
+        shift_list = [[0, 0, 0]]#, [a, 0, 0], [2*a, 0, 0], [0, a, 0], [a, a, 0], [2*a, a, 0]]
+        cell_pairs = [[0, 1]]
         for i,shift in enumerate(shift_list):
             id_num, id_crosslinks_in_cell = self.__unit_cell(a, shift, i, id_num)
             id_crosslinks_matrix.append(id_crosslinks_in_cell)

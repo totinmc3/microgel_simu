@@ -10,5 +10,5 @@ dt = 0.01                   # time step
 skin = 0.4                  # skin of Verlet list
 
 
-Nbeads_arm = 2
+Nbeads_arm = 8
 cell_unit = Nbeads_arm + 1
