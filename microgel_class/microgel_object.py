@@ -66,7 +66,6 @@ class Microgel:
             Nbeads_arm: number of beads per arm between crosslinkers
             id_num: bead id number
         """
-        id_armbeads_in_cell = []
 
         crosslinks_pairs = [[id_crosslinks_in_cell[0], id_crosslinks_in_cell[3]],
                             [id_crosslinks_in_cell[3], id_crosslinks_in_cell[1]],
@@ -93,10 +92,9 @@ class Microgel:
             for i in range(iter_init,iter_end):
                 vec_pos = self.system.part[pairs[0]].pos + diff_vec * i / (Nbeads_arm + 1)
                 self.system.part.add(id=id_num, pos=vec_pos, type=10)
-                id_armbeads_in_cell.append(id_num)
                 id_num += 1
 
-        return id_num, id_armbeads_in_cell
+        return id_num
 
     def __remove_double_particles(self):
         id_list = self.system.part[:].id
@@ -106,44 +104,7 @@ class Microgel:
         for i,j in itertools.combinations(id_list, 2):
             if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.equal_criterion:
                 repeated_part_list.append(i)
-        # for i in id_list:
-        #     for j in id_list:
-        #         if i != j:
-        #             if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.equal_criterion:
-        #                 for k in repeated_part_list:
-        #                     if (i != k)  and (j != k):
-        #                         repeated_part_list.append(i)
         self.system.part[repeated_part_list].remove()
-
-
-    # def __arms_unit_intercell(self, id_crosslinks_matrix, cell_pairs, id_num):
-    #     """
-    #         locate the arm polymer beads between the crosslinker beads of two adjacent 
-    #         unit cells with ids id_crosslinks_in_cell_1 and id_crosslinks_in_cell_2
-    #         respectuvely
-
-    #         id_crosslinks_matrix: list of the lists of the ids of the crosslinkers in the different unit cells
-    #         cell_pairs: list with the cell pairs to connect
-    #         id_num: bead id number
-    #     """
-        
-    #     for cell_pair in cell_pairs:
-            
-    #         crosslinks_pairs = [[id_crosslinks_matrix[cell_pair[0]][3], id_crosslinks_matrix[cell_pair[1]][5]],
-    #                             [id_crosslinks_matrix[cell_pair[0]][6], id_crosslinks_matrix[cell_pair[1]][5]]
-    #                             ]
-
-
-    #         for pairs in crosslinks_pairs:
-    #             diff_vec = self.system.part[pairs[1]].pos - self.system.part[pairs[0]].pos
-
-    #             for i in range(1,Nbeads_arm+1):
-    #                 vec_pos = self.system.part[pairs[0]].pos + diff_vec * i / (Nbeads_arm + 1)
-    #                 self.system.part.add(id=id_num, pos=vec_pos, type=10)
-    #                 id_armbeads_in_cell.append(id_num)
-    #                 id_num += 1
-
-    #     return id_num
 
 
     def initialize_diamondLattice(self):
@@ -152,13 +113,13 @@ class Microgel:
         id_crosslinks_matrix = []
 
         # shift_list = [[0, 0, 0], [a, 0, 0], [0, a, 0], [0, 0, a]]
-        shift_list = [[0, 0, 0], [a, 0, 0], [2*a, 0, 0], [0, a, 0], [a, a, 0], [2*a, a, 0]]
+        shift_list = [[0, 0, 0], [a, 0, 0], [0, a, 0]]#, [2*a, 0, 0], [a, a, 0], [2*a, a, 0]]
         for i,shift in enumerate(shift_list):
             id_num, id_crosslinks_in_cell = self.__unit_cell(a, shift, i, id_num)
             id_crosslinks_matrix.append(id_crosslinks_in_cell)
         
         for id_crosslinks_in_cell in id_crosslinks_matrix:
-            id_num, id_armbeads_in_cell = self.__arms_unit_cell(id_crosslinks_in_cell, self.Nbeads_arm, id_num)
+            id_num = self.__arms_unit_cell(id_crosslinks_in_cell, self.Nbeads_arm, id_num)
 
         print(len(self.system.part[:].id))
         self.__remove_double_particles()
