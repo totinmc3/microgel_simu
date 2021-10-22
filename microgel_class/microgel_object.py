@@ -1,14 +1,23 @@
 import numpy as np
+from numpy import linalg as LA
+import itertools
 import math
 
 from espressomd.interactions import FeneBond
 from espressomd.electrostatics import P3M
 
 class Microgel:
-    def __init__(self,system,Nbeads_arm,cell_unit):
+    def __init__(self, system, FENE_BOND_PARAMS, Nbeads_arm, cell_unit):
         self.system = system
         self.Nbeads_arm = Nbeads_arm
         self.cell_unit = cell_unit
+        self.FENE_BOND_PARAMS = FENE_BOND_PARAMS
+
+        self.fene = FeneBond(**self.FENE_BOND_PARAMS)
+        self.system.bonded_inter.add(self.fene)
+
+        self.bead_separation = self.cell_unit/(4*(self.Nbeads_arm+1))
+        self.equal_criterion = 0.001 * self.bead_separation
 
     def __repr__(self) -> str:
         return f'Microgel(system, {self.Nbeads_arm})'
@@ -85,12 +94,27 @@ class Microgel:
                 vec_pos = self.system.part[pairs[0]].pos + diff_vec * i / (Nbeads_arm + 1)
                 self.system.part.add(id=id_num, pos=vec_pos, type=10)
                 id_armbeads_in_cell.append(id_num)
-                # if i == iter_init:
-                #     self.system.part[pairs[0]].add_bond((fene, id_num))
-                # elif i==iter_end
                 id_num += 1
 
         return id_num, id_armbeads_in_cell
+
+    def __remove_double_particles(self):
+        id_list = self.system.part[:].id
+        # print(id_list)
+        repeated_part_list = []
+
+        for i,j in itertools.combinations(id_list, 2):
+            if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.equal_criterion:
+                repeated_part_list.append(i)
+        # for i in id_list:
+        #     for j in id_list:
+        #         if i != j:
+        #             if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.equal_criterion:
+        #                 for k in repeated_part_list:
+        #                     if (i != k)  and (j != k):
+        #                         repeated_part_list.append(i)
+        self.system.part[repeated_part_list].remove()
+
 
     # def __arms_unit_intercell(self, id_crosslinks_matrix, cell_pairs, id_num):
     #     """
@@ -128,11 +152,14 @@ class Microgel:
         id_crosslinks_matrix = []
 
         # shift_list = [[0, 0, 0], [a, 0, 0], [0, a, 0], [0, 0, a]]
-        shift_list = [[0, 0, 0]]#, [a, 0, 0], [2*a, 0, 0], [0, a, 0], [a, a, 0], [2*a, a, 0]]
-        cell_pairs = [[0, 1]]
+        shift_list = [[0, 0, 0], [a, 0, 0], [2*a, 0, 0], [0, a, 0], [a, a, 0], [2*a, a, 0]]
         for i,shift in enumerate(shift_list):
             id_num, id_crosslinks_in_cell = self.__unit_cell(a, shift, i, id_num)
             id_crosslinks_matrix.append(id_crosslinks_in_cell)
         
         for id_crosslinks_in_cell in id_crosslinks_matrix:
             id_num, id_armbeads_in_cell = self.__arms_unit_cell(id_crosslinks_in_cell, self.Nbeads_arm, id_num)
+
+        print(len(self.system.part[:].id))
+        self.__remove_double_particles()
+        print(len(self.system.part[:].id))
