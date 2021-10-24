@@ -7,17 +7,16 @@ from espressomd.interactions import FeneBond
 from espressomd.electrostatics import P3M
 
 class Microgel:
-    def __init__(self, system, FENE_BOND_PARAMS, Nbeads_arm, cell_unit):
+    def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, Nbeads_arm, cell_unit):
         self.system = system
         self.Nbeads_arm = Nbeads_arm
         self.cell_unit = cell_unit
         self.FENE_BOND_PARAMS = FENE_BOND_PARAMS
-
-        self.fene = FeneBond(**self.FENE_BOND_PARAMS)
-        self.system.bonded_inter.add(self.fene)
+        self.PART_TYPE = PART_TYPE
 
         self.bead_separation = self.cell_unit/(4*(self.Nbeads_arm+1))
         self.equal_criterion = 0.001 * self.bead_separation
+        self.bonding_criteria = self.bead_separation*1.5
 
     def __repr__(self) -> str:
         return f'Microgel(system, {self.Nbeads_arm})'
@@ -52,7 +51,7 @@ class Microgel:
                         [a, 0, a]]                  # 13
 
         for vec_pos in vec_pos_list:
-            self.system.part.add(id=id_num, pos=np.array(vec_pos)+np.array(shift), type=bead_type)
+            self.system.part.add(id=id_num, pos=np.array(vec_pos)+np.array(shift), type=self.PART_TYPE['crosslinker'])
             id_crosslinks_in_cell.append(id_num)
             id_num += 1
         return id_num, id_crosslinks_in_cell
@@ -86,12 +85,15 @@ class Microgel:
 
         for pairs in crosslinks_pairs:
             diff_vec = self.system.part[pairs[1]].pos - self.system.part[pairs[0]].pos
+            print(self.system.part[pairs[1]].pos)
+            print(self.system.part[pairs[0]].pos)
+            print(f"norm vertor diff = {LA.norm(diff_vec)}")
 
             iter_init = 1
             iter_end = Nbeads_arm+1
             for i in range(iter_init,iter_end):
                 vec_pos = self.system.part[pairs[0]].pos + diff_vec * i / (Nbeads_arm + 1)
-                self.system.part.add(id=id_num, pos=vec_pos, type=10)
+                self.system.part.add(id=id_num, pos=vec_pos, type=self.PART_TYPE['polymer_arm'])
                 id_num += 1
 
         return id_num
@@ -124,3 +126,20 @@ class Microgel:
         print(len(self.system.part[:].id))
         self.__remove_double_particles()
         print(len(self.system.part[:].id))
+
+    def initialize_bonds(self):
+        fene = FeneBond(**self.FENE_BOND_PARAMS)
+        self.system.bonded_inter.add(fene)
+        
+        print(self.bonding_criteria)
+        for i,j in itertools.combinations(self.system.part[:].id, 2):
+            # print([i,j])
+            # print(LA.norm(self.system.part[i].pos-self.system.part[j].pos))
+            if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.bonding_criteria:
+                print("criteria satisfied")
+                self.system.part[i].add_bond((fene, j))
+        print(self.system.part[:].bonds)
+
+        # for part_pos in self.system.part.pairs():
+        #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
+        #     if 
