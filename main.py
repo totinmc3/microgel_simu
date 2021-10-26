@@ -30,10 +30,13 @@ if __name__ == "__main__":
     system.time_step = dt
     system.cell_system.skin = skin
 
-    microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, Nbeads_arm, cell_unit)
+    microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit)
     microgel.initialize_diamondLattice()
 
     microgel.initialize_bonds()
+    # microgel.initialize_internoelec(system)
 
-    visualizer = visualization.openGLLive(system)
-    visualizer.run()
+    # system.thermostat.set_langevin(**LANGEVIN_PARAMS)
+    
+    # visualizer = visualization.openGLLive(system)
+    # visualizer.run()

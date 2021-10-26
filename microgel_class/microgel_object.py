@@ -7,16 +7,17 @@ from espressomd.interactions import FeneBond
 from espressomd.electrostatics import P3M
 
 class Microgel:
-    def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, Nbeads_arm, cell_unit):
+    def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit):
         self.system = system
         self.Nbeads_arm = Nbeads_arm
         self.cell_unit = cell_unit
         self.FENE_BOND_PARAMS = FENE_BOND_PARAMS
         self.PART_TYPE = PART_TYPE
+        self.NONBOND_WCA_PARAMS = NONBOND_WCA_PARAMS
 
-        self.bead_separation = self.cell_unit/(4*(self.Nbeads_arm+1))
+        self.bead_separation = np.sqrt(3)*self.cell_unit/(4*(self.Nbeads_arm+1))
         self.equal_criterion = 0.001 * self.bead_separation
-        self.bonding_criteria = self.bead_separation*1.5
+        self.bonding_criteria = self.bead_separation*1.3
 
     def __repr__(self) -> str:
         return f'Microgel(system, {self.Nbeads_arm})'
@@ -85,9 +86,6 @@ class Microgel:
 
         for pairs in crosslinks_pairs:
             diff_vec = self.system.part[pairs[1]].pos - self.system.part[pairs[0]].pos
-            print(self.system.part[pairs[1]].pos)
-            print(self.system.part[pairs[0]].pos)
-            print(f"norm vertor diff = {LA.norm(diff_vec)}")
 
             iter_init = 1
             iter_end = Nbeads_arm+1
@@ -131,15 +129,24 @@ class Microgel:
         fene = FeneBond(**self.FENE_BOND_PARAMS)
         self.system.bonded_inter.add(fene)
         
-        print(self.bonding_criteria)
+        print(f'bonding_criteria = {self.bonding_criteria}')
+        
         for i,j in itertools.combinations(self.system.part[:].id, 2):
             # print([i,j])
-            # print(LA.norm(self.system.part[i].pos-self.system.part[j].pos))
+            print(LA.norm(self.system.part[i].pos-self.system.part[j].pos))
             if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.bonding_criteria:
-                print("criteria satisfied")
+                # print("criteria satisfied")
                 self.system.part[i].add_bond((fene, j))
-        print(self.system.part[:].bonds)
+        # print(self.system.part[:].bonds)
 
         # for part_pos in self.system.part.pairs():
         #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
         #     if 
+
+    def initialize_internoelec(self,system):
+
+        print("Define interactions (no electrostatic)")
+        # Non-bonded Interactions:
+        system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['polymer_arm']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+        system.non_bonded_inter[self.PART_TYPE['crosslinker'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+        system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
