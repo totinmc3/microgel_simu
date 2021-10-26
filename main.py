@@ -1,3 +1,4 @@
+import builtins
 import numpy as np
 from numpy import linalg as LA, string_
 import math
@@ -15,6 +16,7 @@ from espressomd.cluster_analysis import ClusterStructure
 
 from system_parameters import *
 from microgel_class import microgel_object
+from handling import handler
 
 
 ###########################################################################################
@@ -34,9 +36,11 @@ if __name__ == "__main__":
     microgel.initialize_diamondLattice()
 
     microgel.initialize_bonds()
-    # microgel.initialize_internoelec(system)
+    microgel.initialize_internoelec(system)
+    handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
 
-    # system.thermostat.set_langevin(**LANGEVIN_PARAMS)
+    system.thermostat.set_langevin(**LANGEVIN_PARAMS)
     
-    # visualizer = visualization.openGLLive(system)
-    # visualizer.run()
+    visualizer = visualization.openGLLive(system)
+    visualizer.run()
+    # visualizer.screenshot("screenshot_finconfig.png")

@@ -34,3 +34,11 @@ LANGEVIN_PARAMS = {'kT': kBT,
 # in WCA pot: cutoff=2^(1/6)*sigma and  shift="auto"
 NONBOND_WCA_PARAMS = {'epsilon' :eps,
                       'sigma' : sgm}
+
+# Steepest decendent parameters
+STEEPEST_DESCENT_PARAMS = {'f_tol': 1e-2,
+                           'e_tol': 1e-5,
+                           'damping': 30,
+                           'max_steps': 10000,
+                           'max_displacement': 0.01,
+                           'emstep': 10}

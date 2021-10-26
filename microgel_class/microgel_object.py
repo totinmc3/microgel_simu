@@ -5,6 +5,7 @@ import math
 
 from espressomd.interactions import FeneBond
 from espressomd.electrostatics import P3M
+from system_parameters import PART_TYPE
 
 class Microgel:
     def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit):
@@ -121,9 +122,23 @@ class Microgel:
         for id_crosslinks_in_cell in id_crosslinks_matrix:
             id_num = self.__arms_unit_cell(id_crosslinks_in_cell, self.Nbeads_arm, id_num)
 
-        print(len(self.system.part[:].id))
+        # print(len(self.system.part[:]))
         self.__remove_double_particles()
-        print(len(self.system.part[:].id))
+        # print(len(self.system.part[:]))
+
+        #------------- Reload particles for continuous id list -------------
+        crosslinker_pos_list = []
+        arm_pos_list = []
+        for part in self.system.part[:]:
+            if part.type == self.PART_TYPE['crosslinker']:
+                crosslinker_pos_list.append(part.pos)
+            else:
+                arm_pos_list.append(part.pos)
+        self.system.part[:].remove()
+        self.system.part.add(pos=crosslinker_pos_list, type=[self.PART_TYPE['crosslinker']]*len(crosslinker_pos_list))
+        self.system.part.add(pos=arm_pos_list, type=[self.PART_TYPE['polymer_arm']]*len(arm_pos_list))
+
+
 
     def initialize_bonds(self):
         fene = FeneBond(**self.FENE_BOND_PARAMS)
@@ -132,12 +147,8 @@ class Microgel:
         print(f'bonding_criteria = {self.bonding_criteria}')
         
         for i,j in itertools.combinations(self.system.part[:].id, 2):
-            # print([i,j])
-            print(LA.norm(self.system.part[i].pos-self.system.part[j].pos))
             if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.bonding_criteria:
-                # print("criteria satisfied")
                 self.system.part[i].add_bond((fene, j))
-        # print(self.system.part[:].bonds)
 
         # for part_pos in self.system.part.pairs():
         #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
@@ -145,7 +156,7 @@ class Microgel:
 
     def initialize_internoelec(self,system):
 
-        print("Define interactions (no electrostatic)")
+        print("Define interactions (non electrostatic)")
         # Non-bonded Interactions:
         system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['polymer_arm']].wca.set_params(**self.NONBOND_WCA_PARAMS)
         system.non_bonded_inter[self.PART_TYPE['crosslinker'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
