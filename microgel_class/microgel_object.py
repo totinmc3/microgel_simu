@@ -97,6 +97,14 @@ class Microgel:
 
         return id_num
 
+    # def __remove_outterCrosslinker(self, radius, sphere_center, id_crosslinks_matrix):
+    #     sphere_center = np.array(sphere_center) # in units of a
+    #     for i in id_crosslinks_matrix:
+    #         if LA.norm(self.system.part[i].pos-sphere_center) > radius:
+    #             self.system.part[i].remove()
+    #             id_crosslinks_matrix
+
+
     def __remove_double_particles(self):
         id_list = self.system.part[:].id
         # print(id_list)
@@ -104,8 +112,13 @@ class Microgel:
 
         for i,j in itertools.combinations(id_list, 2):
             if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.equal_criterion:
-                repeated_part_list.append(i)
+                if i not in repeated_part_list:
+                    repeated_part_list.append(i) 
         self.system.part[repeated_part_list].remove()
+    
+    # def __remove_deadendCrosslinker(self):
+    #     for part in self.system.part[:]:
+    #         if part.type  == self.PART_TYPE['crosslinker'] and len(part.bond)
 
 
     def initialize_diamondLattice(self):
@@ -114,10 +127,20 @@ class Microgel:
         id_crosslinks_matrix = []
 
         # shift_list = [[0, 0, 0], [a, 0, 0], [0, a, 0], [0, 0, a]]
-        shift_list = [[0, 0, 0], [a, 0, 0], [0, a, 0]]#, [2*a, 0, 0], [a, a, 0], [2*a, a, 0]]
+        center_shift = self.system.box_l[0] / 2 - a
+        shift_list = [[0 + center_shift, 0 + center_shift, 0 + center_shift], 
+                      [a + center_shift, 0 + center_shift, 0 + center_shift], 
+                      [0 + center_shift, a + center_shift, 0 + center_shift], 
+                      [a + center_shift, a + center_shift, 0 + center_shift], 
+                      [0 + center_shift, 0 + center_shift, a + center_shift], 
+                      [a + center_shift, 0 + center_shift, a + center_shift], 
+                      [0 + center_shift, a + center_shift, a + center_shift], 
+                      [a + center_shift, a + center_shift, a + center_shift]]#, [2*a, 0, 0], [a, a, 0], [2*a, a, 0]]
+
         for i,shift in enumerate(shift_list):
             id_num, id_crosslinks_in_cell = self.__unit_cell(a, shift, i, id_num)
             id_crosslinks_matrix.append(id_crosslinks_in_cell)
+        
         
         for id_crosslinks_in_cell in id_crosslinks_matrix:
             id_num = self.__arms_unit_cell(id_crosslinks_in_cell, self.Nbeads_arm, id_num)
