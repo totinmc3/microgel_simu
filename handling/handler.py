@@ -1,0 +1,69 @@
+import numpy as np
+
+def remove_overlap(system, sd_params):
+    print("Remove overlap")
+    # Removes overlap by steepest descent until forces or energies converge
+    # Set up steepest descent integration
+    system.integrator.set_steepest_descent(f_max=0,
+                                           gamma=sd_params['damping'],
+                                           max_displacement=sd_params['max_displacement'])
+
+    # Initialize integrator to obtain initial forces
+    system.integrator.run(0)
+    maxforce = np.max(np.linalg.norm(system.part[:].f, axis=1))
+    energy = system.analysis.energy()['total']
+
+    i = 0
+    while i < sd_params['max_steps'] // sd_params['emstep']:
+        prev_maxforce = maxforce
+        prev_energy = energy
+        system.integrator.run(sd_params['emstep'])
+        maxforce = np.max(np.linalg.norm(system.part[:].f, axis=1))
+        relforce = np.abs((maxforce - prev_maxforce) / prev_maxforce)
+        energy = system.analysis.energy()['total']
+        relener = np.abs((energy - prev_energy) / prev_energy)
+        if i > 1 and (i + 1) % 4 == 0:
+            print(f"minimization step: {(i+1)*sd_params['emstep']:4.0f}"
+                  f"    max. rel. force change:{relforce:+3.3e}"
+                  f"    rel. energy change:{relener:+3.3e}")
+        if relforce < sd_params['f_tol'] or relener < sd_params['e_tol']:
+            break
+        i += 1
+
+    system.integrator.set_vv() # switch back to velocity Verlet (default integrator)
+
+
+def warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM):
+    print("Warmup integration") # it appears just the first time the function is called
+
+    energies_tot_warm = np.zeros((warm_n_times, 2))
+        
+    i = 0
+    while (i < warm_n_times):
+        if (i == TUNE_SET['i_val_1'] or i == TUNE_SET['i_val_2']) and TUNE_SET['tune_bool']:
+            system.cell_system.tune_skin(**TUNE_SKIN_PARAM)
+        system.integrator.run(warm_steps)  # Default: velocity Verlet algorithm
+        print("\r\trun %d at time=%.0f " % (i, system.time), end='')
+        energies_tot_warm[i] = (system.time, system.analysis.energy()['total'])
+        i += 1
+    
+    print("\nEnd warmup")
+
+    # save energy
+    string1 = dir_name_var + '/TotEner_warmup.dat'
+    np.savetxt(string1, np.column_stack((energies_tot_warm[:, 0], energies_tot_warm[:, 1])),fmt='%.5e', delimiter='\t')
+
+    
+def main_integration(system,int_n_times,int_steps,energies_tot,energies_kin,energies_nonbon,energies_bon,counter_energy):
+    print("Main Integration")
+    for i in range(int_n_times):
+        print("\rrun %d at time=%.0f " % (i, system.time), end='')
+        system.integrator.run(int_steps)    # Default: velocity Verlet algorithm
+        energies_tot[counter_energy] = (system.time, system.analysis.energy()['total'])
+        energies_kin[counter_energy] = (system.time, system.analysis.energy()['kinetic'])
+        energies_nonbon[counter_energy] = (system.time, system.analysis.energy()['non_bonded'])
+        energies_bon[counter_energy] = (system.time, system.analysis.energy()['bonded'])
+        counter_energy += 1
+    
+    print('\rSimulation complete')
+    return counter_energy
