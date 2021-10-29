@@ -58,7 +58,7 @@ class Microgel:
             id_num += 1
         return id_num, id_crosslinks_in_cell
 
-    def __arms_unit_cell(self, id_crosslinks_in_cell, Nbeads_arm, id_num):
+    def __arms_unit_cell(self, id_crosslinks_in_cell, id_num):
         """
             locate the arm polymer beads between the crosslinker beads given in id_crosslinks_in_cell
             for a single unit cell
@@ -68,41 +68,50 @@ class Microgel:
             id_num: bead id number
         """
 
-        crosslinks_pairs = [[id_crosslinks_in_cell[0], id_crosslinks_in_cell[3]],
-                            [id_crosslinks_in_cell[3], id_crosslinks_in_cell[1]],
-                            [id_crosslinks_in_cell[1], id_crosslinks_in_cell[4]],
-                            [id_crosslinks_in_cell[4], id_crosslinks_in_cell[2]],
-                            [id_crosslinks_in_cell[3], id_crosslinks_in_cell[5]],
-                            [id_crosslinks_in_cell[3], id_crosslinks_in_cell[6]],
-                            [id_crosslinks_in_cell[4], id_crosslinks_in_cell[8]],
-                            [id_crosslinks_in_cell[4], id_crosslinks_in_cell[7]],
-                            [id_crosslinks_in_cell[5], id_crosslinks_in_cell[10]],
-                            [id_crosslinks_in_cell[6], id_crosslinks_in_cell[9]],
-                            [id_crosslinks_in_cell[7], id_crosslinks_in_cell[9]],
-                            [id_crosslinks_in_cell[8], id_crosslinks_in_cell[10]],
-                            [id_crosslinks_in_cell[10], id_crosslinks_in_cell[13]],
-                            [id_crosslinks_in_cell[10], id_crosslinks_in_cell[12]],
-                            [id_crosslinks_in_cell[9], id_crosslinks_in_cell[12]],
-                            [id_crosslinks_in_cell[9], id_crosslinks_in_cell[11]]]
+        diff_mod = self.Nbeads_arm + 1 # minimal crosslinker-crosslinker distance in units of sigma
+        print(f"diff_mod = {diff_mod}")
 
-        for pairs in crosslinks_pairs:
-            diff_vec = self.system.part[pairs[1]].pos - self.system.part[pairs[0]].pos
+        # crosslinks_pairs = [[id_crosslinks_in_cell[0], id_crosslinks_in_cell[3]],
+        #                     [id_crosslinks_in_cell[3], id_crosslinks_in_cell[1]],
+        #                     [id_crosslinks_in_cell[1], id_crosslinks_in_cell[4]],
+        #                     [id_crosslinks_in_cell[4], id_crosslinks_in_cell[2]],
+        #                     [id_crosslinks_in_cell[3], id_crosslinks_in_cell[5]],
+        #                     [id_crosslinks_in_cell[3], id_crosslinks_in_cell[6]],
+        #                     [id_crosslinks_in_cell[4], id_crosslinks_in_cell[8]],
+        #                     [id_crosslinks_in_cell[4], id_crosslinks_in_cell[7]],
+        #                     [id_crosslinks_in_cell[5], id_crosslinks_in_cell[10]],
+        #                     [id_crosslinks_in_cell[6], id_crosslinks_in_cell[9]],
+        #                     [id_crosslinks_in_cell[7], id_crosslinks_in_cell[9]],
+        #                     [id_crosslinks_in_cell[8], id_crosslinks_in_cell[10]],
+        #                     [id_crosslinks_in_cell[10], id_crosslinks_in_cell[13]],
+        #                     [id_crosslinks_in_cell[10], id_crosslinks_in_cell[12]],
+        #                     [id_crosslinks_in_cell[9], id_crosslinks_in_cell[12]],
+        #                     [id_crosslinks_in_cell[9], id_crosslinks_in_cell[11]]]
 
-            iter_init = 1
-            iter_end = Nbeads_arm+1
-            for i in range(iter_init,iter_end):
-                vec_pos = self.system.part[pairs[0]].pos + diff_vec * i / (Nbeads_arm + 1)
-                self.system.part.add(id=id_num, pos=vec_pos, type=self.PART_TYPE['polymer_arm'])
-                id_num += 1
+        for i,j in itertools.combinations(id_crosslinks_in_cell, 2):
+            diff_vec = self.system.part[j].pos-self.system.part[i].pos
+            print(LA.norm(diff_vec))
+            if LA.norm(diff_vec) < 1.01 * diff_mod:
+                iter_init = 1
+                iter_end = self.Nbeads_arm+1
+                for l in range(iter_init,iter_end):
+                    vec_pos = self.system.part[j].pos + diff_vec * l / (self.Nbeads_arm + 1)
+                    self.system.part.add(id=id_num, pos=vec_pos, type=self.PART_TYPE['polymer_arm'])
+                    id_num += 1
 
         return id_num
 
-    # def __remove_outterCrosslinker(self, radius, sphere_center, id_crosslinks_matrix):
-    #     sphere_center = np.array(sphere_center) # in units of a
-    #     for i in id_crosslinks_matrix:
-    #         if LA.norm(self.system.part[i].pos-sphere_center) > radius:
-    #             self.system.part[i].remove()
-    #             id_crosslinks_matrix
+    def __remove_outterCrosslinker(self, radius, sphere_center, id_crosslinks_matrix):
+        new_id_crosslinks_matrix = []
+        sphere_center = np.array(sphere_center) # in units of a
+        for id_crosslinks_list in id_crosslinks_matrix:
+            iter_list = id_crosslinks_list
+            for i in iter_list:
+                if LA.norm(self.system.part[i].pos-sphere_center) > radius:
+                    self.system.part[i].remove()
+                    id_crosslinks_list.remove(i)
+            new_id_crosslinks_matrix.append(id_crosslinks_list)
+        return new_id_crosslinks_matrix
 
 
     def __remove_double_particles(self):
@@ -141,9 +150,12 @@ class Microgel:
             id_num, id_crosslinks_in_cell = self.__unit_cell(a, shift, i, id_num)
             id_crosslinks_matrix.append(id_crosslinks_in_cell)
         
+        sphere_center = self.system.box_l
+        radius = a
+        id_crosslinks_matrix = self.__remove_outterCrosslinker(radius, sphere_center, id_crosslinks_matrix)
         
         for id_crosslinks_in_cell in id_crosslinks_matrix:
-            id_num = self.__arms_unit_cell(id_crosslinks_in_cell, self.Nbeads_arm, id_num)
+            id_num = self.__arms_unit_cell(id_crosslinks_in_cell, id_num)
 
         # print(len(self.system.part[:]))
         self.__remove_double_particles()
