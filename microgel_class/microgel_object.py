@@ -2,19 +2,22 @@ import numpy as np
 from numpy import linalg as LA
 import itertools
 import math
+import random
 
 from espressomd.interactions import FeneBond
 from espressomd.electrostatics import P3M
-from system_parameters import PART_TYPE
+from system_parameters import PART_TYPE, N_cat
 
 class Microgel:
-    def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit):
+    def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an):
         self.system = system
         self.Nbeads_arm = Nbeads_arm
         self.cell_unit = cell_unit
         self.FENE_BOND_PARAMS = FENE_BOND_PARAMS
         self.PART_TYPE = PART_TYPE
         self.NONBOND_WCA_PARAMS = NONBOND_WCA_PARAMS
+        self.N_cat = N_cat
+        self.N_an = N_an
 
         self.bead_separation = np.sqrt(3)*self.cell_unit/(4*(self.Nbeads_arm+1))
         self.equal_criterion = 0.001 * self.bead_separation
@@ -70,23 +73,6 @@ class Microgel:
 
         diff_mod = self.Nbeads_arm + 1 # minimal crosslinker-crosslinker distance in units of sigma
         print(f"diff_mod = {diff_mod}")
-
-        # crosslinks_pairs = [[id_crosslinks_in_cell[0], id_crosslinks_in_cell[3]],
-        #                     [id_crosslinks_in_cell[3], id_crosslinks_in_cell[1]],
-        #                     [id_crosslinks_in_cell[1], id_crosslinks_in_cell[4]],
-        #                     [id_crosslinks_in_cell[4], id_crosslinks_in_cell[2]],
-        #                     [id_crosslinks_in_cell[3], id_crosslinks_in_cell[5]],
-        #                     [id_crosslinks_in_cell[3], id_crosslinks_in_cell[6]],
-        #                     [id_crosslinks_in_cell[4], id_crosslinks_in_cell[8]],
-        #                     [id_crosslinks_in_cell[4], id_crosslinks_in_cell[7]],
-        #                     [id_crosslinks_in_cell[5], id_crosslinks_in_cell[10]],
-        #                     [id_crosslinks_in_cell[6], id_crosslinks_in_cell[9]],
-        #                     [id_crosslinks_in_cell[7], id_crosslinks_in_cell[9]],
-        #                     [id_crosslinks_in_cell[8], id_crosslinks_in_cell[10]],
-        #                     [id_crosslinks_in_cell[10], id_crosslinks_in_cell[13]],
-        #                     [id_crosslinks_in_cell[10], id_crosslinks_in_cell[12]],
-        #                     [id_crosslinks_in_cell[9], id_crosslinks_in_cell[12]],
-        #                     [id_crosslinks_in_cell[9], id_crosslinks_in_cell[11]]]
 
         for i,j in itertools.combinations(id_crosslinks_in_cell, 2):
             diff_vec = self.system.part[i].pos-self.system.part[j].pos
@@ -157,9 +143,7 @@ class Microgel:
         for id_crosslinks_in_cell in id_crosslinks_matrix:
             id_num = self.__arms_unit_cell(id_crosslinks_in_cell, id_num)
 
-        # print(len(self.system.part[:]))
         self.__remove_double_particles()
-        # print(len(self.system.part[:]))
 
         #------------- Reload particles for continuous id list -------------
         crosslinker_pos_list = []
@@ -187,7 +171,6 @@ class Microgel:
 
         # for part_pos in self.system.part.pairs():
         #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
-        #     if 
 
     def initialize_internoelec(self):
 
@@ -197,4 +180,15 @@ class Microgel:
         self.system.non_bonded_inter[self.PART_TYPE['crosslinker'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
         self.system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
 
-    # def initialize_charged_beads(self):
+    def charge_beads_homo(self):
+        """
+        This function picks randomly beads from the particle list and charge them negatively with valence q = 1. It also adds
+        the corresponding counterions, for which wca interection is also set.
+        
+        """
+        print(f"# of id's = {len(self.system.part[:].id)}")
+        print(f"# of parts = {len(self.system.part[:])}")
+        # print(np.random.random_integers(0,len(self.system.part[:]), size=(self.N_an,1)))
+        # print([random.randint(0,len(self.system.part[:])) for p in range(self.N_an)])
+        self.system.part[[random.randint(0,len(self.system.part[:])) for p in range(self.N_an)]].q = [-1] * self.N_an
+        # id_rdn = np.random.random((self.N_an,1)) * len(self.system.part[:])

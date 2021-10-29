@@ -32,11 +32,12 @@ if __name__ == "__main__":
     system.time_step = dt
     system.cell_system.skin = skin
 
-    microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit)
+    microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an)
     microgel.initialize_diamondLattice()
 
     microgel.initialize_bonds()
     microgel.initialize_internoelec()
+    microgel.charge_beads_homo()
     handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
 
     system.thermostat.set_langevin(**LANGEVIN_PARAMS)
