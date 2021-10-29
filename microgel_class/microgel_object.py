@@ -76,11 +76,9 @@ class Microgel:
         """
 
         diff_mod = self.Nbeads_arm + 1 # minimal crosslinker-crosslinker distance in units of sigma
-        print(f"diff_mod = {diff_mod}")
 
         for i,j in itertools.combinations(id_crosslinks_in_cell, 2):
             diff_vec = self.system.part[i].pos-self.system.part[j].pos
-            print(LA.norm(diff_vec))
             if LA.norm(diff_vec) < 1.01 * diff_mod:
                 iter_init = 1
                 iter_end = self.Nbeads_arm+1
@@ -167,8 +165,10 @@ class Microgel:
             else:
                 arm_pos_list.append(part.pos)
         self.system.part[:].remove()
+        print(f"###### # of particles  = {len(self.system.part[:])}")
         self.system.part.add(pos=crosslinker_pos_list, type=[self.PART_TYPE['crosslinker']]*len(crosslinker_pos_list))
         self.system.part.add(pos=arm_pos_list, type=[self.PART_TYPE['polymer_arm']]*len(arm_pos_list))
+        print(self.system.part[:].id)
 
 
 
@@ -196,6 +196,7 @@ class Microgel:
 
     def __insert_ions(self, N_ions, particle_type, particle_charge):
         self.system.part.add(pos=np.random.random((N_ions, 3)) * self.system.box_l, type=[particle_type] * N_ions, q=[particle_charge] * N_ions)
+        print(f" # of particles = {len(self.system.part[:])}")
 
 
     def charge_beads_homo(self):
@@ -204,11 +205,22 @@ class Microgel:
             the corresponding counterions, for which wca interection is also set.
         
         """
-        print(f"# of id's = {len(self.system.part[:].id)}")
-        print(f"# of parts = {len(self.system.part[:])}")
-        # print(np.random.random_integers(0,len(self.system.part[:]), size=(self.N_an,1)))
-        # print([random.randint(0,len(self.system.part[:])) for p in range(self.N_an)])
-        part_rdm_list = [random.randint(0,len(self.system.part[:])) for p in range(self.N_an)]
+        print('Charge microgel homogeneously')
+        part_rdm_list = []
+        j = 0
+        while j < self.N_an:
+            rdm_num = random.randint(0,len(self.system.part[:])-1)
+            if rdm_num not in part_rdm_list:
+                part_rdm_list.append(rdm_num)
+                j += 1
+        # for i,part in enumerate(self.system.part[:]):
+        #     print(part.id)
+        #     if part.q != 0:
+        #         print(f"prematurely charged particle : {part.id}")
+        #     if part.id in part_rdm_list:
+        #         part.q = -1
+        #         part.type = self.PART_TYPE['anion']
+        #         print(f'total charge = {sum(self.system.part[:].q)}   {part.id}')
         self.system.part[part_rdm_list].q = [-1] * self.N_an
         self.system.part[part_rdm_list].type = [self.PART_TYPE['anion']] * self.N_an
         self.__insert_ions(self.N_an, PART_TYPE["ion_cat"], +1)
