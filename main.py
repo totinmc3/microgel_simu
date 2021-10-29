@@ -37,19 +37,14 @@ if __name__ == "__main__":
 
     microgel.initialize_bonds()
     microgel.initialize_internoelec()
-    print("Test EN - 1")
-    assert abs(sum(system.part[:].q)) < 1e-10
-    print(f'total charge = {abs(sum(system.part[:].q))}')
     microgel.charge_beads_homo()
     handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
-    print("Test EN - 2")
-    print(abs(sum(system.part[:].q)))
-    assert abs(sum(system.part[:].q)) < 1e-10
-    # if N_cat != 0 or N_an !=0:
-    #     handler.initialize_elec(system,P3M_PARAMS)
-
-    # system.thermostat.set_langevin(**LANGEVIN_PARAMS)
     
-    # visualizer = visualization.openGLLive(system)
-    # visualizer.run()
+    if N_cat != 0 or N_an !=0:
+        handler.initialize_elec(system,P3M_PARAMS)
+
+    system.thermostat.set_langevin(**LANGEVIN_PARAMS)
+    
+    visualizer = visualization.openGLLive(system)
+    visualizer.run()
     # visualizer.screenshot("screenshot_finconfig.png")

@@ -224,6 +224,7 @@ class Microgel:
         self.system.part[part_rdm_list].q = [-1] * self.N_an
         self.system.part[part_rdm_list].type = [self.PART_TYPE['anion']] * self.N_an
         self.__insert_ions(self.N_an, PART_TYPE["ion_cat"], +1)
+        assert abs(sum(self.system.part[:].q)) < 1e-10
 
 
         
