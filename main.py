@@ -36,7 +36,7 @@ if __name__ == "__main__":
     microgel.initialize_diamondLattice()
 
     microgel.initialize_bonds()
-    microgel.initialize_internoelec(system)
+    microgel.initialize_internoelec()
     handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
 
     system.thermostat.set_langevin(**LANGEVIN_PARAMS)

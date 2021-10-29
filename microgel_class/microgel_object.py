@@ -189,10 +189,12 @@ class Microgel:
         #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
         #     if 
 
-    def initialize_internoelec(self,system):
+    def initialize_internoelec(self):
 
         print("Define interactions (non electrostatic)")
         # Non-bonded Interactions:
-        system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['polymer_arm']].wca.set_params(**self.NONBOND_WCA_PARAMS)
-        system.non_bonded_inter[self.PART_TYPE['crosslinker'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
-        system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+        self.system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['polymer_arm']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+        self.system.non_bonded_inter[self.PART_TYPE['crosslinker'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+        self.system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+
+    # def initialize_charged_beads(self):
