@@ -24,7 +24,11 @@ FENE_BOND_PARAMS = {'k': 30,             # FENE constant
 
 # Particle types
 PART_TYPE = {'crosslinker' : 0,
-            'polymer_arm' : 1}
+            'polymer_arm' : 1,
+            'cataion' : 2,
+            'anion' : 3,
+            'ion_cat' : 4,
+            'ion_an' : 5}
 
 # Langevin thermostat parameters
 kBT = 1.0                       # temperature

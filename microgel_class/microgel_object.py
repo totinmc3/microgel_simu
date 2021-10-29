@@ -176,9 +176,15 @@ class Microgel:
 
         print("Define interactions (non electrostatic)")
         # Non-bonded Interactions:
-        self.system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['polymer_arm']].wca.set_params(**self.NONBOND_WCA_PARAMS)
-        self.system.non_bonded_inter[self.PART_TYPE['crosslinker'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
-        self.system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+        # self.system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['polymer_arm']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+        # self.system.non_bonded_inter[self.PART_TYPE['crosslinker'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+        # self.system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
+
+        for i,j in itertools.combinations_with_replacement([x for x in PART_TYPE], 2):
+            self.system.non_bonded_inter[self.PART_TYPE[i], self.PART_TYPE[j]].wca.set_params(**self.NONBOND_WCA_PARAMS)
+
+    def __insert_ions(self, N_ions, particle_type, particle_charge):
+        self.system.part.add(pos=np.random.random((N_ions, 3)) * self.system.box_l, type=[particle_type] * N_ions, q=[particle_charge] * N_ions)
 
     def charge_beads_homo(self):
         """
@@ -190,5 +196,10 @@ class Microgel:
         print(f"# of parts = {len(self.system.part[:])}")
         # print(np.random.random_integers(0,len(self.system.part[:]), size=(self.N_an,1)))
         # print([random.randint(0,len(self.system.part[:])) for p in range(self.N_an)])
-        self.system.part[[random.randint(0,len(self.system.part[:])) for p in range(self.N_an)]].q = [-1] * self.N_an
-        # id_rdn = np.random.random((self.N_an,1)) * len(self.system.part[:])
+        part_rdm_list = [random.randint(0,len(self.system.part[:])) for p in range(self.N_an)]
+        self.system.part[part_rdm_list].q = [-1] * self.N_an
+        self.system.part[part_rdm_list].type = [self.PART_TYPE['anion']] * self.N_an
+        self.__insert_ions(self.N_an, PART_TYPE["ion_cat"], +1)
+
+
+        
