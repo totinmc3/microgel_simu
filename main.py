@@ -39,6 +39,8 @@ if __name__ == "__main__":
     microgel.initialize_internoelec()
     microgel.charge_beads_homo()
     handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
+    if N_cat != 0 or N_an !=0:
+        handler.initialize_elec(system,P3M_PARAMS)
 
     system.thermostat.set_langevin(**LANGEVIN_PARAMS)
     

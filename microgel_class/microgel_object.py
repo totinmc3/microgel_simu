@@ -23,11 +23,14 @@ class Microgel:
         self.equal_criterion = 0.001 * self.bead_separation
         self.bonding_criteria = self.bead_separation*1.3
 
+
     def __repr__(self) -> str:
         return f'Microgel(system, {self.Nbeads_arm})'
 
+
     def __str__(self) -> str:
         return f'Microgel created:\n\t\tNbead_edge = {self.Nbeads_arm}'
+
 
     def __unit_cell(self, a, shift, bead_type, id_num):
         """
@@ -61,6 +64,7 @@ class Microgel:
             id_num += 1
         return id_num, id_crosslinks_in_cell
 
+
     def __arms_unit_cell(self, id_crosslinks_in_cell, id_num):
         """
             locate the arm polymer beads between the crosslinker beads given in id_crosslinks_in_cell
@@ -87,7 +91,15 @@ class Microgel:
 
         return id_num
 
+
     def __remove_outterCrosslinker(self, radius, sphere_center, id_crosslinks_matrix):
+        """
+            The function removes the crosslinker beads that are located further than @radius form the network centre
+            
+            radius: critical radius
+            sphere_center:  center of the critical sphere
+            id_crosslinks_matrix: list with the id's of the crosslinkers
+        """
         new_id_crosslinks_matrix = []
         sphere_center = np.array(sphere_center) # in units of a
         for id_crosslinks_list in id_crosslinks_matrix:
@@ -101,6 +113,7 @@ class Microgel:
 
 
     def __remove_double_particles(self):
+        """ For overlapping beads, it keeps only one and removes the rest """
         id_list = self.system.part[:].id
         # print(id_list)
         repeated_part_list = []
@@ -172,24 +185,23 @@ class Microgel:
         # for part_pos in self.system.part.pairs():
         #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
 
+
     def initialize_internoelec(self):
 
         print("Define interactions (non electrostatic)")
         # Non-bonded Interactions:
-        # self.system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['polymer_arm']].wca.set_params(**self.NONBOND_WCA_PARAMS)
-        # self.system.non_bonded_inter[self.PART_TYPE['crosslinker'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
-        # self.system.non_bonded_inter[self.PART_TYPE['polymer_arm'], self.PART_TYPE['crosslinker']].wca.set_params(**self.NONBOND_WCA_PARAMS)
-
         for i,j in itertools.combinations_with_replacement([x for x in PART_TYPE], 2):
             self.system.non_bonded_inter[self.PART_TYPE[i], self.PART_TYPE[j]].wca.set_params(**self.NONBOND_WCA_PARAMS)
+
 
     def __insert_ions(self, N_ions, particle_type, particle_charge):
         self.system.part.add(pos=np.random.random((N_ions, 3)) * self.system.box_l, type=[particle_type] * N_ions, q=[particle_charge] * N_ions)
 
+
     def charge_beads_homo(self):
         """
-        This function picks randomly beads from the particle list and charge them negatively with valence q = 1. It also adds
-        the corresponding counterions, for which wca interection is also set.
+            This function picks randomly beads from the particle list and charge them negatively with valence q = 1. It also adds
+            the corresponding counterions, for which wca interection is also set.
         
         """
         print(f"# of id's = {len(self.system.part[:].id)}")

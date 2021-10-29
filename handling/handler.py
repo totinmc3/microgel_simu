@@ -1,4 +1,5 @@
 import numpy as np
+from espressomd.electrostatics import P3M
 
 def remove_overlap(system, sd_params):
     print("Remove overlap")
@@ -67,3 +68,9 @@ def main_integration(system,int_n_times,int_steps,energies_tot,energies_kin,ener
     
     print('\rSimulation complete')
     return counter_energy
+
+
+def initialize_elec(system,P3M_PARAMS):
+        print("Define electrostatic interactions")
+        p3m = P3M(**P3M_PARAMS)
+        system.actors.add(p3m)

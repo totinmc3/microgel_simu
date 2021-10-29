@@ -48,3 +48,8 @@ STEEPEST_DESCENT_PARAMS = {'f_tol': 1e-2,
                            'max_steps': 10000,
                            'max_displacement': 0.01,
                            'emstep': 10}
+
+# Electrostatic
+Bjerrum_length = 2.0*sgm    # Bjerrum length
+P3M_PARAMS = {'prefactor': kBT * Bjerrum_length,
+              'accuracy': 1e-3}
