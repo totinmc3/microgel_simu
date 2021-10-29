@@ -89,7 +89,7 @@ class Microgel:
         #                     [id_crosslinks_in_cell[9], id_crosslinks_in_cell[11]]]
 
         for i,j in itertools.combinations(id_crosslinks_in_cell, 2):
-            diff_vec = self.system.part[j].pos-self.system.part[i].pos
+            diff_vec = self.system.part[i].pos-self.system.part[j].pos
             print(LA.norm(diff_vec))
             if LA.norm(diff_vec) < 1.01 * diff_mod:
                 iter_init = 1
@@ -150,8 +150,8 @@ class Microgel:
             id_num, id_crosslinks_in_cell = self.__unit_cell(a, shift, i, id_num)
             id_crosslinks_matrix.append(id_crosslinks_in_cell)
         
-        sphere_center = self.system.box_l
-        radius = a
+        sphere_center = self.system.box_l / 2
+        radius = 1.7*a
         id_crosslinks_matrix = self.__remove_outterCrosslinker(radius, sphere_center, id_crosslinks_matrix)
         
         for id_crosslinks_in_cell in id_crosslinks_matrix:
