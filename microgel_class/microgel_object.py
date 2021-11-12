@@ -126,11 +126,29 @@ class Microgel:
     #     for part in self.system.part[:]:
     #         if part.type  == self.PART_TYPE['crosslinker'] and len(part.bond)
 
+    def __remove_deadendCrosslinker(self, id_crosslinks_matrix):
+        """
+            Remove deadend crosslinkers and returns an updated id-crosslinked list
+        """
+
+        new_id_crosslinks_matrix = []
+        for id_crosslinks_list in id_crosslinks_matrix:
+            iter_list = id_crosslinks_list
+            for i in iter_list:
+                id_list = self.system.analysis.nbhood(pos=self.system.part[i].pos, r_catch=1.1)
+                print(id_list)
+                if len(id_list)<3:
+                    self.system.part[i].remove()
+                    id_crosslinks_list.remove(i)
+            new_id_crosslinks_matrix.append(id_crosslinks_list)
+
+        return new_id_crosslinks_matrix
+
 
     def initialize_diamondLattice(self):
         a = self.cell_unit
         id_num = 0
-        id_crosslinks_matrix = []
+        id_crosslinks_matrix = [] # list containeng id-lists of crosslinkers of each unit cell
 
         # shift_list = [[0, 0, 0], [a, 0, 0], [0, a, 0], [0, 0, a]]
         center_shift = self.system.box_l[0] / 2 - a
@@ -147,6 +165,7 @@ class Microgel:
             id_num, id_crosslinks_in_cell = self.__unit_cell(a, shift, i, id_num)
             id_crosslinks_matrix.append(id_crosslinks_in_cell)
         
+        # remove crosslinkers that are further than radius from the box centre
         sphere_center = self.system.box_l / 2
         radius = 1.7*a
         id_crosslinks_matrix = self.__remove_outterCrosslinker(radius, sphere_center, id_crosslinks_matrix)
@@ -154,6 +173,7 @@ class Microgel:
         for id_crosslinks_in_cell in id_crosslinks_matrix:
             id_num = self.__arms_unit_cell(id_crosslinks_in_cell, id_num)
 
+        id_crosslinks_matrix = self.__remove_deadendCrosslinker(id_crosslinks_matrix)
         self.__remove_double_particles()
 
         #------------- Reload particles for continuous id list -------------
