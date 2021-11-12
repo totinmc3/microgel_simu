@@ -15,6 +15,7 @@ cell_unit = 4 * (Nbeads_arm + 1) / np.sqrt(3)
 N_cat = 0   # number of cataionic beads in microgel network
 N_an = 100   # number of anionic beads in microgel network
 
+
 # Interaction and bonds:
 # FENE bond
 r_inf = 1.8                              # max extention
@@ -53,3 +54,25 @@ STEEPEST_DESCENT_PARAMS = {'f_tol': 1e-2,
 Bjerrum_length = 2.0*sgm    # Bjerrum length
 P3M_PARAMS = {'prefactor': kBT * Bjerrum_length,
               'accuracy': 1e-3}
+
+# Warmup integration
+warm_steps = int(1.0/dt)
+warm_n_times = 500000
+warmup_loop = 1                     # number of warmup function iteractions (= calls)
+warmup_counter = 0                  # counter of warmup function calls
+energies_tot_warm_bool = True       # calculation of warmup energy
+
+# Integration
+int_steps = int(1.0/dt)     # integration steps (chosen such that after int_steps, one unit of time is achieved)
+int_n_times = 10000         # number of iterations within correlated configurations
+int_uncorr_times = 10       # number of iterations for uncorrelated configurations
+
+TUNE_SET = {'tune_bool' : True,
+             'i_val_1' : 15000,
+             'i_val_2' : 80000}
+             
+TUNE_SKIN_PARAM = {'min_skin' : 0.1, 
+                   'max_skin': 1.0, 
+                   'tol' : 0.05, 
+                   'int_steps' : 50*int_steps, 
+                   'adjust_max_skin' : True}

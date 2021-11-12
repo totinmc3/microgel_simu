@@ -135,9 +135,7 @@ class Microgel:
         for id_crosslinks_list in id_crosslinks_matrix:
             iter_list = id_crosslinks_list
             for i in iter_list:
-                id_list = self.system.analysis.nbhood(pos=self.system.part[i].pos, r_catch=1.1)
-                print(id_list)
-                if len(id_list)<3:
+                if len(self.system.analysis.nbhood(pos=self.system.part[i].pos, r_catch=1.1))<3:
                     self.system.part[i].remove()
                     id_crosslinks_list.remove(i)
             new_id_crosslinks_matrix.append(id_crosslinks_list)
