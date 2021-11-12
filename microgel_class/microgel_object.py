@@ -144,6 +144,10 @@ class Microgel:
 
 
     def initialize_diamondLattice(self):
+        """
+            The function initializes a diamond lattice. It returns the number of crosslinkers of
+            the network and the number of monomers
+        '"""
         a = self.cell_unit
         id_num = 0
         id_crosslinks_matrix = [] # list containeng id-lists of crosslinkers of each unit cell
@@ -182,11 +186,15 @@ class Microgel:
                 crosslinker_pos_list.append(part.pos)
             else:
                 arm_pos_list.append(part.pos)
+        # print(f"# crosslinkers = {len(crosslinker_pos_list)}")
+        # print(f"# arm beads = {len(arm_pos_list)}")
         self.system.part[:].remove()
-        print(f"###### # of particles  = {len(self.system.part[:])}")
+        # print(f"###### # of particles  = {len(self.system.part[:])}")
         self.system.part.add(pos=crosslinker_pos_list, type=[self.PART_TYPE['crosslinker']]*len(crosslinker_pos_list))
         self.system.part.add(pos=arm_pos_list, type=[self.PART_TYPE['polymer_arm']]*len(arm_pos_list))
-        print(self.system.part[:].id)
+        # print(self.system.part[:].id)
+
+        return len(crosslinker_pos_list), len(arm_pos_list)
 
 
 

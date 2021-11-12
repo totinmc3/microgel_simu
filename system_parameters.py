@@ -13,7 +13,7 @@ skin = 0.4                  # skin of Verlet list
 Nbeads_arm = 10
 cell_unit = 4 * (Nbeads_arm + 1) / np.sqrt(3)
 N_cat = 0   # number of cataionic beads in microgel network
-N_an = 100   # number of anionic beads in microgel network
+N_an = 0   # number of anionic beads in microgel network
 
 
 # Interaction and bonds:

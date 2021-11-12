@@ -48,7 +48,7 @@ if __name__ == "__main__":
     system.cell_system.skin = skin
 
     microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an)
-    microgel.initialize_diamondLattice()
+    number_crosslink, number_monomers = microgel.initialize_diamondLattice()
 
     microgel.initialize_bonds()
     microgel.initialize_internoelec()
@@ -61,13 +61,13 @@ if __name__ == "__main__":
     system.thermostat.set_langevin(**LANGEVIN_PARAMS)
     
     with open(dir_name_var + "/system_info.txt", "a") as info_file:
-        number_monomers = len([x for x in system.part[:] if x.type == PART_TYPE['polymer_arm']])
-        number_crosslink = len([x for x in system.part[:] if x.type == PART_TYPE['crosslinker']])
+        # number_monomers = len([x for x in system.part[:] if x.type == PART_TYPE['polymer_arm']])
+        # number_crosslink = len([x for x in system.part[:] if x.type == PART_TYPE['crosslinker']])
         print("# of polymer monomers = {:d}".format(number_monomers), file=info_file)
         print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
         print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
 
-    # handler.warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM)
+    handler.warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM)
 
     visualizer = visualization.openGLLive(system)
     visualizer.run()
