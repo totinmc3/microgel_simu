@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     microgel.initialize_bonds()
     microgel.initialize_internoelec()
-    # microgel.charge_beads_homo()
+    microgel.charge_beads_homo()
     handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
     
     if N_cat != 0 or N_an !=0:
@@ -86,6 +86,8 @@ if __name__ == "__main__":
     counter_energy = 0
     for j in range(int_uncorr_times):
         counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, counter_energy)
+        com = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
+        print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
         gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
         shape_list = gyr_tens["shape"]
         print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
