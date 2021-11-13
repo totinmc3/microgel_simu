@@ -55,7 +55,16 @@ def warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM)
     np.savetxt(string1, np.column_stack((energies_tot_warm[:, 0], energies_tot_warm[:, 1])),fmt='%.5e', delimiter='\t')
 
     
-def main_integration(system,int_n_times,int_steps,energies_tot,energies_kin,energies_nonbon,energies_bon,counter_energy):
+def main_integration(system,int_n_times,int_steps,energies_tot,energies_kin,energies_nonbon,energies_bon,counter_energy=0):
+    """
+        main_integration function perform the main integartion for the calculation of observables
+
+        system: system instance
+        int_steps: integration steps per call of integrator
+        int_n_times: number of iterations within correlated configurations (# of calls of integrator)
+        energy_*: matrices to store the different energies -np.zeros((int_n_times*int_uncorr_times, 2))-
+        counter_energy = counter of calls of main_integration function
+    """
     print("Main Integration")
     for i in range(int_n_times):
         print("\rrun %d at time=%.0f " % (i, system.time), end='')

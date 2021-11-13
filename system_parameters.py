@@ -5,7 +5,7 @@ sgm = 1.0                   # length: particle diameter sigma (sgm)
 m = 1.0                     # mass: particle mass m
 Q_E = 1.0                   # elenetary charge
 # time: derived quantity
-box_l = 150                 # box size
+# box_l = 150                 # box size
 dt = 0.01                   # time step
 skin = 0.4                  # skin of Verlet list
 
@@ -57,14 +57,14 @@ P3M_PARAMS = {'prefactor': kBT * Bjerrum_length,
 
 # Warmup integration
 warm_steps = int(1.0/dt)
-warm_n_times = 500000
+warm_n_times = 1000
 warmup_loop = 1                     # number of warmup function iteractions (= calls)
 warmup_counter = 0                  # counter of warmup function calls
 energies_tot_warm_bool = True       # calculation of warmup energy
 
 # Integration
 int_steps = int(1.0/dt)     # integration steps (chosen such that after int_steps, one unit of time is achieved)
-int_n_times = 10000         # number of iterations within correlated configurations
+int_n_times = 100         # number of iterations within correlated configurations
 int_uncorr_times = 10       # number of iterations for uncorrelated configurations
 
 TUNE_SET = {'tune_bool' : True,
