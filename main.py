@@ -57,8 +57,6 @@ if __name__ == "__main__":
     number_crosslink, number_monomers = microgel.initialize_diamondLattice()
     
     with open(dir_name_var + "system_info.txt", "a") as info_file:
-        # number_monomers = len([x for x in system.part[:] if x.type == PART_TYPE['polymer_arm']])
-        # number_crosslink = len([x for x in system.part[:] if x.type == PART_TYPE['crosslinker']])
         print("# of polymer monomers = {:d}".format(number_monomers), file=info_file)
         print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
         print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
@@ -94,6 +92,15 @@ if __name__ == "__main__":
                 gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
                 file = open(dir_name_var + "gyration_tensor.dat", "a"))
     
-    visualizer = visualization.openGLLive(system)
-    # visualizer.run()
-    visualizer.screenshot("results/screenshot_finconfig.png")
+    # save data
+    string1 = dir_name_var + "positions.dat"
+    Npart_tot = len(system.part[:])
+    i = np.arange(0,Npart_tot,1)
+    position_matrix = np.asarray(system.part[:].pos_folded)
+    particle_type = np.asarray(system.part[:].type)
+    np.savetxt(string1, np.column_stack((i,particle_type,position_matrix[:,0],position_matrix[:,1],
+                                            position_matrix[:,2])),fmt='%d\t%d\t%.6f\t%.6f\t%.6f', delimiter='\t')
+
+    # visualizer = visualization.openGLLive(system)
+    # # visualizer.run()
+    # visualizer.screenshot("results/screenshot_finconfig.png")
