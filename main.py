@@ -13,6 +13,7 @@ from espressomd import polymer
 from espressomd import visualization
 from espressomd.pair_criteria import DistanceCriterion
 from espressomd.cluster_analysis import ClusterStructure
+import espressomd.io.writer.vtf
 
 from system_parameters import *
 from microgel_class import microgel_object
@@ -47,6 +48,8 @@ if __name__ == "__main__":
         os.mkdir(dir_name_var)
 
     system_info(dir_name_var)
+
+    fp = open('trajectory.vtf', mode='w+t')
     
     system = espressomd.System(box_l=[box_l,box_l,box_l])
     system.periodicity = [True, True, True]
@@ -76,21 +79,21 @@ if __name__ == "__main__":
     handler.warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM)
 
 
-    energies_tot = np.zeros((int_n_times*int_uncorr_times, 2))
-    energies_kin = np.zeros((int_n_times*int_uncorr_times, 2))
-    energies_nonbon = np.zeros((int_n_times*int_uncorr_times, 2))
-    energies_bon = np.zeros((int_n_times*int_uncorr_times, 2))
-    system.time = 0
-    counter_energy = 0
-    for j in range(int_uncorr_times):
-        counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, counter_energy)
-        com = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
-        print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
-        gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
-        shape_list = gyr_tens["shape"]
-        print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
-                gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
-                file = open(dir_name_var + "gyration_tensor.dat", "a"))
+    # energies_tot = np.zeros((int_n_times*int_uncorr_times, 2))
+    # energies_kin = np.zeros((int_n_times*int_uncorr_times, 2))
+    # energies_nonbon = np.zeros((int_n_times*int_uncorr_times, 2))
+    # energies_bon = np.zeros((int_n_times*int_uncorr_times, 2))
+    # system.time = 0
+    # counter_energy = 0
+    # for j in range(int_uncorr_times):
+    #     counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, counter_energy)
+    #     com = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
+    #     print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
+    #     gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
+    #     shape_list = gyr_tens["shape"]
+    #     print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
+    #             gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
+    #             file = open(dir_name_var + "gyration_tensor.dat", "a"))
     
     # save data
     string1 = dir_name_var + "positions.dat"
@@ -101,6 +104,11 @@ if __name__ == "__main__":
     np.savetxt(string1, np.column_stack((i,particle_type,position_matrix[:,0],position_matrix[:,1],
                                             position_matrix[:,2])),fmt='%d\t%d\t%.6f\t%.6f\t%.6f', delimiter='\t')
 
-    # visualizer = visualization.openGLLive(system)
-    # # visualizer.run()
+    # write structure block as header
+    espressomd.io.writer.vtf.writevsf(system, fp)
+    # write final positions as coordinate block
+    espressomd.io.writer.vtf.writevcf(system, fp)
+    
+    visualizer = visualization.openGLLive(system)
+    visualizer.run()
     # visualizer.screenshot("results/screenshot_finconfig.png")

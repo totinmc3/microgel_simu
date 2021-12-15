@@ -6,7 +6,6 @@ import random
 
 from espressomd.interactions import FeneBond
 from espressomd.electrostatics import P3M
-from system_parameters import PART_TYPE, N_cat
 
 class Microgel:
     def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an):
@@ -216,7 +215,7 @@ class Microgel:
 
         print("Define interactions (non electrostatic)")
         # Non-bonded Interactions:
-        for i,j in itertools.combinations_with_replacement([x for x in PART_TYPE], 2):
+        for i,j in itertools.combinations_with_replacement([x for x in self.PART_TYPE], 2):
             self.system.non_bonded_inter[self.PART_TYPE[i], self.PART_TYPE[j]].wca.set_params(**self.NONBOND_WCA_PARAMS)
 
 
@@ -249,7 +248,7 @@ class Microgel:
         #         print(f'total charge = {sum(self.system.part[:].q)}   {part.id}')
         self.system.part[part_rdm_list].q = [-1] * self.N_an
         self.system.part[part_rdm_list].type = [self.PART_TYPE['anion']] * self.N_an
-        self.__insert_ions(self.N_an, PART_TYPE["ion_cat"], +1)
+        self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
         assert abs(sum(self.system.part[:].q)) < 1e-10
 
 
