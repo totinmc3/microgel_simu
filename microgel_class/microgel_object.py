@@ -151,16 +151,14 @@ class Microgel:
         id_num = 0
         id_crosslinks_matrix = [] # list containeng id-lists of crosslinkers of each unit cell
 
-        # shift_list = [[0, 0, 0], [a, 0, 0], [0, a, 0], [0, 0, a]]
-        center_shift = self.system.box_l[0] / 2 - a
-        shift_list = [[0 + center_shift, 0 + center_shift, 0 + center_shift], 
-                      [a + center_shift, 0 + center_shift, 0 + center_shift], 
-                      [0 + center_shift, a + center_shift, 0 + center_shift], 
-                      [a + center_shift, a + center_shift, 0 + center_shift], 
-                      [0 + center_shift, 0 + center_shift, a + center_shift], 
-                      [a + center_shift, 0 + center_shift, a + center_shift], 
-                      [0 + center_shift, a + center_shift, a + center_shift], 
-                      [a + center_shift, a + center_shift, a + center_shift]]#, [2*a, 0, 0], [a, a, 0], [2*a, a, 0]]
+        cell_repeat = 2 # number of diamond lattice cells per axis
+        remove_ref = {2: 1.7, 3: 1.9} # criterium radius for bead removal depending on cell_repeat
+
+        center_shift = self.system.box_l[0] / 2 - a * cell_repeat / 2
+
+        shift_list = []
+        for i,j,k in itertools.product([x for x in range(cell_repeat)], repeat=3):
+            shift_list.append([i*a + center_shift, j*a + center_shift, k*a + center_shift])
 
         for i,shift in enumerate(shift_list):
             id_num, id_crosslinks_in_cell = self.__unit_cell(a, shift, i, id_num)
@@ -168,7 +166,7 @@ class Microgel:
         
         # remove crosslinkers that are further than radius from the box centre
         sphere_center = self.system.box_l / 2
-        radius = 1.7*a
+        radius = remove_ref[cell_repeat]*a
         id_crosslinks_matrix = self.__remove_outterCrosslinker(radius, sphere_center, id_crosslinks_matrix)
         
         for id_crosslinks_in_cell in id_crosslinks_matrix:
