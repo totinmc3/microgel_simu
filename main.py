@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Process running parameters.')
     parser.add_argument('box_size', metavar='box_size', type=int, help='box size')
-    parser.add_argument('N_an', metavar='N_an', type=int, help='Number of anionic beads per microgel')
-    parser.add_argument('N_cat', metavar='N_cat', type=int, help='Number of cationic beads per microgel')
+    parser.add_argument('--N_an', type=int, help='Number of anionic beads per microgel', default=0)
+    parser.add_argument('--N_cat', type=int, help='Number of cationic beads per microgel', default=0)
     argm = parser.parse_args()
 
     box_l = argm.box_size
@@ -63,20 +63,22 @@ if __name__ == "__main__":
     microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an)
     number_crosslink, number_monomers = microgel.initialize_diamondLattice()
 
+    
+    with open(dir_name_var + "system_info.txt", "a") as info_file:
+        print("# of polymer monomers = {:d}".format(number_monomers), file=info_file)
+        print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
+        print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
+
+
+    microgel.initialize_bonds()
+    microgel.initialize_internoelec()
+    if N_cat != 0 or N_an !=0:
+        microgel.charge_beads_homo()
+    handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
+    
     visualizer = visualization.openGLLive(system)
     visualizer.run()
-    
-    # with open(dir_name_var + "system_info.txt", "a") as info_file:
-    #     print("# of polymer monomers = {:d}".format(number_monomers), file=info_file)
-    #     print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
-    #     print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
 
-
-    # microgel.initialize_bonds()
-    # microgel.initialize_internoelec()
-    # microgel.charge_beads_homo()
-    # handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
-    
     # if N_cat != 0 or N_an !=0:
     #     handler.initialize_elec(system,P3M_PARAMS)
 
