@@ -230,22 +230,6 @@ class Microgel:
         """
         print('Charge microgel homogeneously')
         part_rdm_list = random.sample(range(len(self.system.part[:])-1), self.N_an)
-        # part_rdm_list = []
-        # j = 0
-        # while j < self.N_an:
-        #     rdm_num = random.randint(0,len(self.system.part[:])-1)
-        #     if rdm_num not in part_rdm_list:
-        #         part_rdm_list.append(rdm_num)
-        #         j += 1
-
-        # for i,part in enumerate(self.system.part[:]):
-        #     print(part.id)
-        #     if part.q != 0:
-        #         print(f"prematurely charged particle : {part.id}")
-        #     if part.id in part_rdm_list:
-        #         part.q = -1
-        #         part.type = self.PART_TYPE['anion']
-        #         print(f'total charge = {sum(self.system.part[:].q)}   {part.id}')
         self.system.part[part_rdm_list].q = [-1] * self.N_an
         self.system.part[part_rdm_list].type = [self.PART_TYPE['anion']] * self.N_an
         self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
