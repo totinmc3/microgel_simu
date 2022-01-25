@@ -147,7 +147,7 @@ class Microgel:
         id_num = 0
         id_crosslinks_matrix = [] # list containeng id-lists of crosslinkers of each unit cell
 
-        cell_repeat = 2 # number of diamond lattice cells per axis
+        cell_repeat = 3 # number of diamond lattice cells per axis
         remove_ref = {2: 1.7, 3: 1.9} # criterium radius for bead removal depending on cell_repeat
 
         center_shift = self.system.box_l[0] / 2 - a * cell_repeat / 2
