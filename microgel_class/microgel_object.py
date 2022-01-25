@@ -229,13 +229,15 @@ class Microgel:
         
         """
         print('Charge microgel homogeneously')
-        part_rdm_list = []
-        j = 0
-        while j < self.N_an:
-            rdm_num = random.randint(0,len(self.system.part[:])-1)
-            if rdm_num not in part_rdm_list:
-                part_rdm_list.append(rdm_num)
-                j += 1
+        part_rdm_list = random.sample(range(len(self.system.part[:])-1), self.N_an)
+        # part_rdm_list = []
+        # j = 0
+        # while j < self.N_an:
+        #     rdm_num = random.randint(0,len(self.system.part[:])-1)
+        #     if rdm_num not in part_rdm_list:
+        #         part_rdm_list.append(rdm_num)
+        #         j += 1
+
         # for i,part in enumerate(self.system.part[:]):
         #     print(part.id)
         #     if part.q != 0:
