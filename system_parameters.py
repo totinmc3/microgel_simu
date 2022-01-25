@@ -13,7 +13,7 @@ skin = 0.4                  # skin of Verlet list
 Nbeads_arm = 20
 cell_unit = 4 * (Nbeads_arm + 1) / np.sqrt(3)
 N_cat = 0   # number of cataionic beads in microgel network
-N_an = 800   # number of anionic beads in microgel network
+N_an = 10   # number of anionic beads in microgel network
 
 
 # Interaction and bonds:
@@ -57,7 +57,7 @@ P3M_PARAMS = {'prefactor': kBT * Bjerrum_length,
 
 # Warmup integration
 warm_steps = int(1.0/dt)
-warm_n_times = 3000
+warm_n_times = 10
 warmup_loop = 1                     # number of warmup function iteractions (= calls)
 warmup_counter = 0                  # counter of warmup function calls
 energies_tot_warm_bool = True       # calculation of warmup energy

@@ -1,16 +1,13 @@
-import builtins
 import numpy as np
 from numpy import linalg as LA, number, string_
-import math
 import argparse
-import itertools
 import os
 
 import espressomd
 from espressomd import electrostatics
 from espressomd.interactions import *
 from espressomd import polymer
-from espressomd import visualization
+# from espressomd import visualization
 from espressomd.pair_criteria import DistanceCriterion
 from espressomd.cluster_analysis import ClusterStructure
 import espressomd.io.writer.vtf
@@ -47,7 +44,7 @@ if __name__ == "__main__":
     # N_an = argm.N_an
     # N_cat = argm.N_cat
 
-    dir_name_var = os.path.abspath('.')
+    dir_name_var = os.path.abspath('.') + '/'
     if not os.path.exists(dir_name_var):
         os.mkdir(dir_name_var)
 
@@ -64,57 +61,57 @@ if __name__ == "__main__":
     number_crosslink, number_monomers = microgel.initialize_diamondLattice()
 
     
-    # with open(dir_name_var + "system_info.txt", "a") as info_file:
-    #     print("# of polymer monomers = {:d}".format(number_monomers), file=info_file)
-    #     print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
-    #     print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
+    with open(dir_name_var + "system_info.txt", "a") as info_file:
+        print("# of polymer monomers = {:d}".format(number_monomers), file=info_file)
+        print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
+        print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
 
 
-    # microgel.initialize_bonds()
-    # microgel.initialize_internoelec()
-    # if N_cat != 0 or N_an !=0:
-    #     microgel.charge_beads_homo()
-    # handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
+    microgel.initialize_bonds()
+    microgel.initialize_internoelec()
+    if N_cat != 0 or N_an !=0:
+        microgel.charge_beads_homo()
+    handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
 
-    # if N_cat != 0 or N_an !=0:
-    #     handler.initialize_elec(system,P3M_PARAMS)
+    if N_cat != 0 or N_an !=0:
+        handler.initialize_elec(system,P3M_PARAMS)
 
-    # system.thermostat.set_langevin(**LANGEVIN_PARAMS)
+    system.thermostat.set_langevin(**LANGEVIN_PARAMS)
 
-    # system.time = 0
-    # handler.warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM)
+    system.time = 0
+    handler.warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM)
 
 
-    # # energies_tot = np.zeros((int_n_times*int_uncorr_times, 2))
-    # # energies_kin = np.zeros((int_n_times*int_uncorr_times, 2))
-    # # energies_nonbon = np.zeros((int_n_times*int_uncorr_times, 2))
-    # # energies_bon = np.zeros((int_n_times*int_uncorr_times, 2))
-    # # system.time = 0
-    # # counter_energy = 0
-    # # for j in range(int_uncorr_times):
-    # #     counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, counter_energy)
-    # #     com = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
-    # #     print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
-    # #     gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
-    # #     shape_list = gyr_tens["shape"]
-    # #     print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
-    # #             gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
-    # #             file = open(dir_name_var + "gyration_tensor.dat", "a"))
+    energies_tot = np.zeros((int_n_times*int_uncorr_times, 2))
+    energies_kin = np.zeros((int_n_times*int_uncorr_times, 2))
+    energies_nonbon = np.zeros((int_n_times*int_uncorr_times, 2))
+    energies_bon = np.zeros((int_n_times*int_uncorr_times, 2))
+    system.time = 0
+    counter_energy = 0
+    for j in range(int_uncorr_times):
+        counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, counter_energy)
+        com = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
+        print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
+        gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
+        shape_list = gyr_tens["shape"]
+        print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
+                gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
+                file = open(dir_name_var + "gyration_tensor.dat", "a"))
     
-    # # save data
-    # string1 = dir_name_var + "positions.dat"
-    # Npart_tot = len(system.part[:])
-    # i = np.arange(0,Npart_tot,1)
-    # position_matrix = np.asarray(system.part[:].pos_folded)
-    # particle_type = np.asarray(system.part[:].type)
-    # np.savetxt(string1, np.column_stack((i,particle_type,position_matrix[:,0],position_matrix[:,1],
-    #                                         position_matrix[:,2])),fmt='%d\t%d\t%.6f\t%.6f\t%.6f', delimiter='\t')
+    # save data
+    string1 = dir_name_var + "positions.dat"
+    Npart_tot = len(system.part[:])
+    i = np.arange(0,Npart_tot,1)
+    position_matrix = np.asarray(system.part[:].pos_folded)
+    particle_type = np.asarray(system.part[:].type)
+    np.savetxt(string1, np.column_stack((i,particle_type,position_matrix[:,0],position_matrix[:,1],
+                                            position_matrix[:,2])),fmt='%d\t%d\t%.6f\t%.6f\t%.6f', delimiter='\t')
 
-    # # write structure block as header
-    # espressomd.io.writer.vtf.writevsf(system, fp)
-    # # write final positions as coordinate block
-    # espressomd.io.writer.vtf.writevcf(system, fp)
+    # write structure block as header
+    espressomd.io.writer.vtf.writevsf(system, fp)
+    # write final positions as coordinate block
+    espressomd.io.writer.vtf.writevcf(system, fp)
     
-    visualizer = visualization.openGLLive(system)
-    visualizer.run()
+    # visualizer = visualization.openGLLive(system)
+    # visualizer.run()
     # # visualizer.screenshot("results/screenshot_finconfig.png")

@@ -112,7 +112,6 @@ class Microgel:
     def __remove_double_particles(self):
         """ For overlapping beads, it keeps only one and removes the rest """
         id_list = self.system.part[:].id
-        # print(id_list)
         repeated_part_list = []
 
         for i,j in itertools.combinations(id_list, 2):
@@ -121,10 +120,7 @@ class Microgel:
                     repeated_part_list.append(i) 
         self.system.part[repeated_part_list].remove()
     
-    # def __remove_deadendCrosslinker(self):
-    #     for part in self.system.part[:]:
-    #         if part.type  == self.PART_TYPE['crosslinker'] and len(part.bond)
-
+    
     def __remove_deadendCrosslinker(self, id_crosslinks_matrix):
         """
             Remove deadend crosslinkers and returns an updated id-crosslinked list
@@ -183,14 +179,10 @@ class Microgel:
                 crosslinker_pos_list.append(part.pos)
             else:
                 arm_pos_list.append(part.pos)
-        # print(f"# crosslinkers = {len(crosslinker_pos_list)}")
-        # print(f"# arm beads = {len(arm_pos_list)}")
         self.system.part[:].remove()
-        # print(f"###### # of particles  = {len(self.system.part[:])}")
         self.system.part.add(pos=crosslinker_pos_list, type=[self.PART_TYPE['crosslinker']]*len(crosslinker_pos_list))
         self.system.part.add(pos=arm_pos_list, type=[self.PART_TYPE['polymer_arm']]*len(arm_pos_list))
-        # print(self.system.part[:].id)
-
+        
         return len(crosslinker_pos_list), len(arm_pos_list)
 
 
