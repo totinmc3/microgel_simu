@@ -76,3 +76,7 @@ TUNE_SKIN_PARAM = {'min_skin' : 0.1,
                    'tol' : 0.05, 
                    'int_steps' : 50*int_steps, 
                    'adjust_max_skin' : True}
+
+# Density profiles
+ION_PROFILE_BOOL = True
+N_bins = 125
