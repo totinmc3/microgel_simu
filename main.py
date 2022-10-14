@@ -100,10 +100,11 @@ if __name__ == "__main__":
     energies_kin = np.zeros((int_n_times*int_uncorr_times, 2))
     energies_nonbon = np.zeros((int_n_times*int_uncorr_times, 2))
     energies_bon = np.zeros((int_n_times*int_uncorr_times, 2))
+    energies_coul = np.zeros((int_n_times*int_uncorr_times, 2))
     system.time = 0
     counter_energy = 0
     for j in range(int_uncorr_times):
-        counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, counter_energy)
+        counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, energies_coul, counter_energy)
         com = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
         print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
         gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm'], PART_TYPE['cation'], PART_TYPE['anion']])
@@ -201,6 +202,18 @@ if __name__ == "__main__":
     particle_type = np.asarray(system.part[:].type)
     np.savetxt(string1, np.column_stack((i,particle_type,position_matrix[:,0],position_matrix[:,1],
                                             position_matrix[:,2])),fmt='%d\t%d\t%.6f\t%.6f\t%.6f', delimiter='\t')
+
+    string1 = dir_name_var + '/energies.dat'
+    np.savetxt(string1, np.column_stack((energies_tot[:, 0], energies_tot[:, 1], energies_kin[:, 1], energies_bon[:, 1], 
+                                         energies_nonbon[:, 1], energies_coul[:, 1])),fmt='%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e', delimiter='\t')
+    ''' File columns
+    1. time
+    2. total energy
+    3. kinetic energy
+    4. bonded energy
+    5. non-bonded energy
+    6. coulomb energy
+    '''
 
     # write structure block as header
     espressomd.io.writer.vtf.writevsf(system, fp)

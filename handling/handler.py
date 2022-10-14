@@ -55,7 +55,7 @@ def warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM)
     np.savetxt(string1, np.column_stack((energies_tot_warm[:, 0], energies_tot_warm[:, 1])),fmt='%.5e', delimiter='\t')
 
     
-def main_integration(system,int_n_times,int_steps,energies_tot,energies_kin,energies_nonbon,energies_bon,counter_energy=0):
+def main_integration(system, int_n_times, int_steps ,energies_tot, energies_kin, energies_nonbon, energies_bon, energies_coul, counter_energy=0):
     """
         main_integration function perform the main integartion for the calculation of observables
 
@@ -73,6 +73,7 @@ def main_integration(system,int_n_times,int_steps,energies_tot,energies_kin,ener
         energies_kin[counter_energy] = (system.time, system.analysis.energy()['kinetic'])
         energies_nonbon[counter_energy] = (system.time, system.analysis.energy()['non_bonded'])
         energies_bon[counter_energy] = (system.time, system.analysis.energy()['bonded'])
+        energies_coul[counter_energy] = (system.time, system.analysis.energy()['coulomb'])
         counter_energy += 1
     
     print('\rSimulation complete')
