@@ -3,9 +3,12 @@ from numpy import linalg as LA
 import itertools
 import math
 import random
+import sys
+
 
 from espressomd.interactions import FeneBond
 from espressomd.electrostatics import P3M
+from system_parameters import N_an
 
 class Microgel:
     def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an):
@@ -147,10 +150,10 @@ class Microgel:
         id_num = 0
         id_crosslinks_matrix = [] # list containeng id-lists of crosslinkers of each unit cell
 
-        cell_repeat = 3 # number of diamond lattice cells per axis
+        cell_repeat = 2 # number of diamond lattice cells per axis
         remove_ref = {2: 1.7, 3: 1.9} # criterium radius for bead removal depending on cell_repeat
 
-        center_shift = self.system.box_l[0] / 2 - a * cell_repeat / 2
+        center_shift = 0.95*self.system.box_l[0] / 2 - a * cell_repeat / 2
 
         shift_list = []
         for i,j,k in itertools.product([x for x in range(cell_repeat)], repeat=3):
@@ -217,7 +220,7 @@ class Microgel:
     def charge_beads_homo(self):
         """
             This function picks randomly beads from the particle list and charge them negatively with valence q = 1. It also adds
-            the corresponding counterions, for which wca interection is also set.
+            the corresponding counterions, for which wca interaction is also set.
         
         """
         print('Charge microgel homogeneously')
@@ -227,5 +230,39 @@ class Microgel:
         self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
         assert abs(sum(self.system.part[:].q)) < 1e-10
 
-
+    def charge_beads_shell(self):
+        """
+            This function picks randomly beads from the particle list for beads with a distance larged than internal radius b from the
+            network COM and charge them negatively with valence q such that the total charged is Z_an. It also adds
+            the corresponding monovalent counterions, for which wca interaction is also set.
         
+        """
+
+        print('Charge microgel shell')
+
+        b = 1.1 * 3*self.cell_unit/4
+        if b > self.cell_unit:
+            sys.exit("Error: Internal radius b larger than unit cell size a_cell (for 2x2x2 unit cell gel): take b <= a_cell")
+        com = self.system.analysis.center_of_mass(p_type=self.PART_TYPE['polymer_arm'])
+        dist_to_com = LA.norm( self.system.part[:].pos - com, axis=1)
+        index = np.array([x for x in range(len(self.system.part[:]))])
+        zeros = np.zeros_like(index)-1
+        outter_bead_list = np.where(dist_to_com > b, index, zeros)
+        outter_bead_list = outter_bead_list[outter_bead_list !=-1]
+        n_outter_beads = len(outter_bead_list)
+        print(f'{n_outter_beads=}')
+
+        if self.N_an > n_outter_beads:
+            charge_per_bead = self.N_an / n_outter_beads
+        else:
+            outter_bead_list = random.sample(list(outter_bead_list), self.N_an)
+            charge_per_bead = 1
+            n_outter_beads = len(outter_bead_list)
+        
+        self.system.part[outter_bead_list].q = [-charge_per_bead] * n_outter_beads
+        self.system.part[outter_bead_list].type = [self.PART_TYPE['anion']] * n_outter_beads
+        self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
+        assert abs(sum(self.system.part[:].q)) < 1e-10
+
+
+

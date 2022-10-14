@@ -2,6 +2,7 @@ import numpy as np
 from numpy import linalg as LA, number, string_
 import argparse
 import os
+import math
 
 import espressomd
 from espressomd import electrostatics
@@ -15,6 +16,7 @@ import espressomd.io.writer.vtf
 from system_parameters import *
 from microgel_class import microgel_object
 from handling import handler
+from analysis import densityProfile_calc as dp
 
 
 def system_info(dir_name_var):
@@ -35,13 +37,14 @@ if __name__ == "__main__":
     print("System initialization")
 
     parser = argparse.ArgumentParser(description='Process running parameters.')
-    parser.add_argument('box_size', metavar='box_size', type=int, help='box size')
+    # parser.add_argument('box_size', metavar='box_size', type=int, help='box size')
     # parser.add_argument('N_an', metavar='N_an', type=int, help='Number of anionic beads per microgel')
+    parser.add_argument('alpha_an', metavar='alpha_an', type=float, help='anionic ionization degree')
     # parser.add_argument('N_cat', metavar='N_cat', type=int, help='Number of cationic beads per microgel')
     argm = parser.parse_args()
 
-    box_l = argm.box_size
-    # N_an = argm.N_an
+    # box_l = argm.box_size
+    alpha_an = argm.alpha_an
     # N_cat = argm.N_cat
 
     dir_name_var = os.path.abspath('.') + '/'
@@ -59,8 +62,18 @@ if __name__ == "__main__":
 
     microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an)
     number_crosslink, number_monomers = microgel.initialize_diamondLattice()
+    N_an = int(alpha_an * (number_crosslink + number_monomers))
+    microgel.N_an = N_an
+
+    # gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
+    # shape_list = gyr_tens["shape"]
+    # print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
+    #         gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
+    #         file = open(dir_name_var + "gyration_tensor.dat", "a"))
+
 
     
+
     with open(dir_name_var + "system_info.txt", "a") as info_file:
         print("# of polymer monomers = {:d}".format(number_monomers), file=info_file)
         print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
@@ -71,6 +84,7 @@ if __name__ == "__main__":
     microgel.initialize_internoelec()
     if N_cat != 0 or N_an !=0:
         microgel.charge_beads_homo()
+        # microgel.charge_beads_shell()
     handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
 
     if N_cat != 0 or N_an !=0:
@@ -97,7 +111,81 @@ if __name__ == "__main__":
         print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
                 gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
                 file = open(dir_name_var + "gyration_tensor.dat", "a"))
-    
+        if ION_PROFILE_BOOL:
+            print("Compute density profiles")
+            # Shifting the COM of the cluster ot the center of the box
+            print("\tShift COM")
+            com_vec = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
+            diff = com_vec - system.box_l/2.
+            system.part[:].pos -= diff
+
+            print("\tExplicit calculation")
+            if j==0:
+                # neutral polymer beads
+                obs_data, obs_bins = dp.particle_density_profile(system, [PART_TYPE['polymer_arm'], PART_TYPE['crosslinker']], N_bins)
+                polymerProfile = obs_data
+                # cation beads
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['cataion'], N_bins)
+                cationProfile = obs_data
+                # cation beads
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['anion'], N_bins)
+                anionProfile = obs_data
+                # Cations
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['ion_cat'], N_bins)
+                microionProfile_cations = obs_data
+                # Anions
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['ion_an'], N_bins)
+                microionProfile_anions = obs_data
+            else:
+                # neutral polymer beads
+                obs_data, obs_bins = dp.particle_density_profile(system, [PART_TYPE['polymer_arm'], PART_TYPE['crosslinker']], N_bins)
+                polymerProfile += obs_data
+                # cation beads
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['cataion'], N_bins)
+                cationProfile += obs_data
+                # cation beads
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['anion'], N_bins)
+                anionProfile += obs_data
+                # Cations
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['ion_cat'], N_bins)
+                microionProfile_cations += obs_data
+                # Anions
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['ion_an'], N_bins)
+                microionProfile_anions += obs_data
+    if ION_PROFILE_BOOL: # tranformation from cartesian to spherical coordinates
+        prof_list = [microionProfile_cations, microionProfile_anions, polymerProfile, cationProfile, anionProfile]
+        averaged_profile_list = []
+        profile_sph_realiz = []
+        for count,profile in enumerate(prof_list):
+            averaged_profile = profile/int_uncorr_times
+
+            Nbins = int(N_bins/2)
+            intensities = np.zeros(Nbins)
+            box_part = len(averaged_profile)
+            r = np.linspace(0, system.box_l[0]/2, Nbins)
+            bin_size = r[1] - r[0]
+            box_part2 = box_part/2
+            for i in range(box_part):
+                for j in range(box_part):
+                    for k in range(box_part):
+                        dist = math.sqrt((i - box_part2)**2 + (j - box_part2)**2 + (k - box_part2)**2)
+                        if dist <= box_part2:
+                            intensities[math.floor(dist/bin_size)] += averaged_profile[i, j, k]
+            profile_sph_realiz.append(intensities)
+        profile_sph_realiz.append(r)
+        intensity_stack = profile_sph_realiz
+        np.savetxt("averaged_profiles.txt", np.transpose(intensity_stack), fmt='%.4e', delimiter='\t')
+        ''' File columns
+        1. microionProfile_cations
+        2. microionProfile_anions
+        3. polymerProfile
+        4. cationProfile
+        5. anionProfile
+        6. r
+        '''
+
+
+            
     # save data
     string1 = dir_name_var + "positions.dat"
     Npart_tot = len(system.part[:])
