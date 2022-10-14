@@ -3,6 +3,7 @@ from numpy import linalg as LA, number, string_
 import argparse
 import os
 import math
+from tqdm import tqdm
 
 import espressomd
 from espressomd import electrostatics
@@ -12,12 +13,15 @@ from espressomd import polymer
 from espressomd.pair_criteria import DistanceCriterion
 from espressomd.cluster_analysis import ClusterStructure
 import espressomd.io.writer.vtf
+from espressomd import checkpointing
 
 from system_parameters import *
 from microgel_class import microgel_object
 from handling import handler
 from analysis import densityProfile_calc as dp
 
+
+HAS_A_CHECKPOINT = os.path.exists(CHECK_NAME)
 
 def system_info(dir_name_var):
     with open(dir_name_var + "/system_info.txt", "w") as info_file:
@@ -51,49 +55,89 @@ if __name__ == "__main__":
     if not os.path.exists(dir_name_var):
         os.mkdir(dir_name_var)
 
-    system_info(dir_name_var)
+    if not HAS_A_CHECKPOINT:
 
-    fp = open('trajectory.vtf', mode='w+t')
+        ##### creating checkpointing
+        checkpoint = checkpointing.Checkpoint(checkpoint_id = CHECK_NAME, checkpoint_path = '.')
+
+        system_info(dir_name_var)
+
+        system = espressomd.System(box_l=[box_l,box_l,box_l])
+        system.periodicity = [True, True, True]
+        system.time_step = dt
+        system.cell_system.skin = skin
+
+        microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an)
+        number_crosslink, number_monomers = microgel.initialize_diamondLattice()
+        N_an = int(alpha_an * (number_crosslink + number_monomers))
+        microgel.N_an = N_an
+
+        # gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
+        # shape_list = gyr_tens["shape"]
+        # print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
+        #         gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
+        #         file = open(dir_name_var + "gyration_tensor.dat", "a"))
+
+
+        with open(dir_name_var + "system_info.txt", "a") as info_file:
+            print("# of polymer monomers = {:d}".format(number_monomers), file=info_file)
+            print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
+            print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
+
+
+        microgel.initialize_bonds()
+        microgel.initialize_internoelec()
+        if N_cat != 0 or N_an !=0:
+            # microgel.charge_beads_homo()
+            microgel.charge_beads_shell()
+        handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
+
+        if N_cat != 0 or N_an !=0:
+            handler.initialize_elec(system,P3M_PARAMS)
+
+        system.thermostat.set_langevin(**LANGEVIN_PARAMS)
+
+        system.time = 0
+
+        iter_warmup = 0
+
+        checkpoint.register("system")
+        checkpoint.register("dir_name_var")
+        checkpoint.register("iter_warmup")
+
+
+    elif HAS_A_CHECKPOINT:
+        checkpoint = checkpointing.Checkpoint(checkpoint_id = CHECK_NAME, checkpoint_path = '.')   
+        checkpoint.load()
+
+        print("Loaded checkpoint.\n")
+
+    # handler.warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM, checkpoint, CHECKPOINT_PERIOD, iter_warmup)
+    # Warmup
+    print("Warmup integration") # it appears just the first time the function is called
+
+    energies_tot_warm = np.zeros((warm_n_times, 2))
+        
+    pbar = tqdm(desc='Warmup loop', total=warm_n_times)
+    while (iter_warmup < warm_n_times):
+        if iter_warmup%CHECKPOINT_PERIOD == 0:
+            checkpoint.save()
+        if (iter_warmup == TUNE_SET['i_val_1'] or iter_warmup == TUNE_SET['i_val_2']) and TUNE_SET['tune_bool']:
+            system.cell_system.tune_skin(**TUNE_SKIN_PARAM)
+        system.integrator.run(warm_steps)  # Default: velocity Verlet algorithm
+        print("\r\trun %d at time=%.0f " % (iter_warmup, system.time), end='')
+        energies_tot_warm[iter_warmup] = (system.time, system.analysis.energy()['total'])
+        iter_warmup += 1
+
+        pbar.update(1)
+
+    pbar.close()
     
-    system = espressomd.System(box_l=[box_l,box_l,box_l])
-    system.periodicity = [True, True, True]
-    system.time_step = dt
-    system.cell_system.skin = skin
+    print("\nEnd warmup")
 
-    microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an)
-    number_crosslink, number_monomers = microgel.initialize_diamondLattice()
-    N_an = int(alpha_an * (number_crosslink + number_monomers))
-    microgel.N_an = N_an
-
-    # gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
-    # shape_list = gyr_tens["shape"]
-    # print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
-    #         gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
-    #         file = open(dir_name_var + "gyration_tensor.dat", "a"))
-
-
-    
-
-    with open(dir_name_var + "system_info.txt", "a") as info_file:
-        print("# of polymer monomers = {:d}".format(number_monomers), file=info_file)
-        print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
-        print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
-
-
-    microgel.initialize_bonds()
-    microgel.initialize_internoelec()
-    if N_cat != 0 or N_an !=0:
-        # microgel.charge_beads_homo()
-        microgel.charge_beads_shell()
-    handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
-
-    if N_cat != 0 or N_an !=0:
-        handler.initialize_elec(system,P3M_PARAMS)
-
-    system.thermostat.set_langevin(**LANGEVIN_PARAMS)
-
-    system.time = 0
-    handler.warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM)
+    # save energy
+    string1 = dir_name_var + '/TotEner_warmup.dat'
+    np.savetxt(string1, np.column_stack((energies_tot_warm[:, 0], energies_tot_warm[:, 1])),fmt='%.5e', delimiter='\t')
 
 
     energies_tot = np.zeros((int_n_times*int_uncorr_times, 2))
@@ -215,6 +259,7 @@ if __name__ == "__main__":
     6. coulomb energy
     '''
 
+    fp = open('trajectory.vtf', mode='w+t')
     # write structure block as header
     espressomd.io.writer.vtf.writevsf(system, fp)
     # write final positions as coordinate block

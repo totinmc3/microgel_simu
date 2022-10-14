@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 from espressomd.electrostatics import P3M
 
 def remove_overlap(system, sd_params):
@@ -34,7 +35,7 @@ def remove_overlap(system, sd_params):
     system.integrator.set_vv() # switch back to velocity Verlet (default integrator)
 
 
-def warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM):
+def warmup(system, warm_n_times, warm_steps, dir_name_var, TUNE_SET, TUNE_SKIN_PARAM):
     print("Warmup integration") # it appears just the first time the function is called
 
     energies_tot_warm = np.zeros((warm_n_times, 2))
@@ -47,6 +48,35 @@ def warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM)
         print("\r\trun %d at time=%.0f " % (i, system.time), end='')
         energies_tot_warm[i] = (system.time, system.analysis.energy()['total'])
         i += 1
+    
+    print("\nEnd warmup")
+
+    # save energy
+    string1 = dir_name_var + '/TotEner_warmup.dat'
+    np.savetxt(string1, np.column_stack((energies_tot_warm[:, 0], energies_tot_warm[:, 1])),fmt='%.5e', delimiter='\t')
+
+def warmup(system, warm_n_times, warm_steps, dir_name_var, TUNE_SET, TUNE_SKIN_PARAM, checkpoint, CHECKPOINT_PERIOD, iter_warmup):
+    '''
+        warmup with checkpointing
+    '''
+    print("Warmup integration") # it appears just the first time the function is called
+
+    energies_tot_warm = np.zeros((warm_n_times, 2))
+        
+    pbar = tqdm(desc='Warmup loop', total=warm_n_times)
+    while (iter_warmup < warm_n_times):
+        if iter_warmup%CHECKPOINT_PERIOD == 0:
+            checkpoint.save()
+        if (iter_warmup == TUNE_SET['i_val_1'] or iter_warmup == TUNE_SET['i_val_2']) and TUNE_SET['tune_bool']:
+            system.cell_system.tune_skin(**TUNE_SKIN_PARAM)
+        system.integrator.run(warm_steps)  # Default: velocity Verlet algorithm
+        print("\r\trun %d at time=%.0f " % (iter_warmup, system.time), end='')
+        energies_tot_warm[iter_warmup] = (system.time, system.analysis.energy()['total'])
+        iter_warmup += 1
+
+        pbar.update(1)
+
+    pbar.close()
     
     print("\nEnd warmup")
 
