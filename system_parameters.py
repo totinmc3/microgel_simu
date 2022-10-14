@@ -64,7 +64,7 @@ energies_tot_warm_bool = True       # calculation of warmup energy
 
 # Integration
 int_steps = int(1.0/dt)     # integration steps (chosen such that after int_steps, one unit of time is achieved)
-int_n_times = 100         # number of iterations within correlated configurations
+int_n_times = 10         # number of iterations within correlated configurations
 int_uncorr_times = 10       # number of iterations for uncorrelated configurations
 
 TUNE_SET = {'tune_bool' : True,
@@ -79,7 +79,7 @@ TUNE_SKIN_PARAM = {'min_skin' : 0.1,
 
 # Density profiles
 ION_PROFILE_BOOL = True
-N_bins = 80
+N_bins = int(box_l)
 
 # Checkpointing
 CHECK_NAME = "chk-res"
