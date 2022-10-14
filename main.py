@@ -24,7 +24,7 @@ def system_info(dir_name_var):
         print("L = {:.2f}".format(box_l), file=info_file)
         print("kBT = {:.2f}".format(kBT), file=info_file)
         print("# beads per arm = {:d}".format(Nbeads_arm), file=info_file)
-        print("# number of cataionic beads in microgel network = {:d}".format(N_cat), file=info_file)   
+        print("# number of cationic beads in microgel network = {:d}".format(N_cat), file=info_file)   
         print("# number of anionic beads in microgel network = {:d}".format(N_an), file=info_file)   
 
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, counter_energy)
         com = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
         print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
-        gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
+        gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm'], PART_TYPE['cation'], PART_TYPE['anion']])
         shape_list = gyr_tens["shape"]
         print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
                 gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
@@ -125,7 +125,7 @@ if __name__ == "__main__":
                 obs_data, obs_bins = dp.particle_density_profile(system, [PART_TYPE['polymer_arm'], PART_TYPE['crosslinker']], N_bins)
                 polymerProfile = obs_data
                 # cation beads
-                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['cataion'], N_bins)
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['cation'], N_bins)
                 cationProfile = obs_data
                 # cation beads
                 obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['anion'], N_bins)
@@ -141,7 +141,7 @@ if __name__ == "__main__":
                 obs_data, obs_bins = dp.particle_density_profile(system, [PART_TYPE['polymer_arm'], PART_TYPE['crosslinker']], N_bins)
                 polymerProfile += obs_data
                 # cation beads
-                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['cataion'], N_bins)
+                obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['cation'], N_bins)
                 cationProfile += obs_data
                 # cation beads
                 obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['anion'], N_bins)

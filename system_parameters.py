@@ -5,14 +5,14 @@ sgm = 1.0                   # length: particle diameter sigma (sgm)
 m = 1.0                     # mass: particle mass m
 Q_E = 1.0                   # elenetary charge
 # time: derived quantity
-# box_l = 150                 # box size
+box_l = 80                 # box size
 dt = 0.01                   # time step
 skin = 0.4                  # skin of Verlet list
 
 
-Nbeads_arm = 20
+Nbeads_arm = 5
 cell_unit = 4 * (Nbeads_arm + 1) / np.sqrt(3)
-N_cat = 0   # number of cataionic beads in microgel network
+N_cat = 0   # number of cationic beads in microgel network
 N_an = 10   # number of anionic beads in microgel network
 
 
@@ -26,7 +26,7 @@ FENE_BOND_PARAMS = {'k': 30,             # FENE constant
 # Particle types
 PART_TYPE = {'crosslinker' : 0,
             'polymer_arm' : 1,
-            'cataion' : 2,
+            'cation' : 2,
             'anion' : 3,
             'ion_cat' : 4,
             'ion_an' : 5}
@@ -79,4 +79,4 @@ TUNE_SKIN_PARAM = {'min_skin' : 0.1,
 
 # Density profiles
 ION_PROFILE_BOOL = True
-N_bins = 125
+N_bins = 80
