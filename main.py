@@ -27,6 +27,7 @@ def system_info(dir_name_var):
     with open(dir_name_var + "/system_info.txt", "w") as info_file:
         print("L = {:.2f}".format(box_l), file=info_file)
         print("kBT = {:.2f}".format(kBT), file=info_file)
+        print("c_salt = {:.2f} Molar".format(c_salt_molar), file=info_file)
         print("# beads per arm = {:d}".format(Nbeads_arm), file=info_file)
         print("# number of cationic beads in microgel network = {:d}".format(N_cat), file=info_file)   
         print("# number of anionic beads in microgel network = {:d}".format(N_an), file=info_file)   
@@ -67,10 +68,17 @@ if __name__ == "__main__":
         system.time_step = dt
         system.cell_system.skin = skin
 
-        microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an)
+        microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an, c_salt)
         number_crosslink, number_monomers = microgel.initialize_diamondLattice()
         N_an = int(alpha_an * (number_crosslink + number_monomers))
         microgel.N_an = N_an
+
+        if c_salt != 0:
+            print("Add salt to the system")
+            N_salt_ion_pairs = microgel.add_salt()
+            with open(dir_name_var + "system_info.txt", "a") as info_file:
+                print("# of salt anions = {:d}".format(N_salt_ion_pairs), file=info_file)
+                print("# of salt cations = {:d}".format(N_salt_ion_pairs), file=info_file)
 
         # gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
         # shape_list = gyr_tens["shape"]
@@ -84,12 +92,11 @@ if __name__ == "__main__":
             print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
             print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
 
-
         microgel.initialize_bonds()
         microgel.initialize_internoelec()
         if N_cat != 0 or N_an !=0:
-            # microgel.charge_beads_homo()
-            microgel.charge_beads_shell()
+            microgel.charge_beads_homo()
+            # microgel.charge_beads_shell()
         handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
 
         if N_cat != 0 or N_an !=0:

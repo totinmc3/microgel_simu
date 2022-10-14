@@ -4,6 +4,8 @@ eps = 1.0                   # energy: amplitude epsilon (eps) from the Weeks-Cha
 sgm = 1.0                   # length: particle diameter sigma (sgm)
 m = 1.0                     # mass: particle mass m
 Q_E = 1.0                   # elenetary charge
+conversion_factor = 6.02214/10 # If the density is in molar, multiplication by this factor gives density in number of particles per nm^3
+sigma = 0.355               # sigma in nm for molar units
 # time: derived quantity
 box_l = 80                 # box size
 dt = 0.01                   # time step
@@ -15,6 +17,8 @@ cell_unit = 4 * (Nbeads_arm + 1) / np.sqrt(3)
 N_cat = 0   # number of cationic beads in microgel network
 N_an = 10   # number of anionic beads in microgel network
 
+c_salt_molar = 0    # salt concentration in molar
+c_salt = c_salt_molar * conversion_factor * sigma**3      # salt-ion-pair concentration in units of sigma^3
 
 # Interaction and bonds:
 # FENE bond

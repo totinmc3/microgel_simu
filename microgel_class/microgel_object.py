@@ -11,7 +11,7 @@ from espressomd.electrostatics import P3M
 from system_parameters import N_an
 
 class Microgel:
-    def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an):
+    def __init__(self, system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an, c_salt=0):
         self.system = system
         self.Nbeads_arm = Nbeads_arm
         self.cell_unit = cell_unit
@@ -20,10 +20,12 @@ class Microgel:
         self.NONBOND_WCA_PARAMS = NONBOND_WCA_PARAMS
         self.N_cat = N_cat
         self.N_an = N_an
+        self.c_salt = c_salt
 
         self.bead_separation = np.sqrt(3)*self.cell_unit/(4*(self.Nbeads_arm+1))
         self.equal_criterion = 0.001 * self.bead_separation
         self.bonding_criteria = self.bead_separation*1.3
+        self.N_salt_ion_pairs = int(self.c_salt * self.system.box_l[0] * self.system.box_l[1] * self.system.box_l[2]) # number of salt ion pairs
 
 
     def __repr__(self) -> str:
@@ -264,5 +266,20 @@ class Microgel:
         self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
         assert abs(sum(self.system.part[:].q)) < 1e-10
 
+    def add_salt(self):
+        """
+            This function adds salt ions (anions and cations) randomly distributed in the whole volume.
+        
+        """
+
+        if self.N_salt_ion_pairs > 0:
+            self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["ion_cat"], +1)
+            self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["ion_an"], -1)
+
+        print("Total number of ion pairs: ", self.N_salt_ion_pairs)
+        print("Total number of particles: ", len(self.system.part[:]))
+        assert abs(sum(self.system.part[:].q)) < 1e-10
+
+        return self.N_salt_ion_pairs
 
 
