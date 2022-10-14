@@ -101,9 +101,12 @@ if __name__ == "__main__":
 
         iter_warmup = 0
 
+        energies_tot_warm = np.zeros((warm_n_times, 2))
+        
         checkpoint.register("system")
         checkpoint.register("dir_name_var")
         checkpoint.register("iter_warmup")
+        checkpoint.register("energies_tot_warm")
 
 
     elif HAS_A_CHECKPOINT:
@@ -113,10 +116,8 @@ if __name__ == "__main__":
         print("Loaded checkpoint.\n")
 
     # handler.warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM, checkpoint, CHECKPOINT_PERIOD, iter_warmup)
-    # Warmup
+    # Warmup --------------------------------------------------------------------------
     print("Warmup integration") # it appears just the first time the function is called
-
-    energies_tot_warm = np.zeros((warm_n_times, 2))
         
     pbar = tqdm(desc='Warmup loop', total=warm_n_times)
     while (iter_warmup < warm_n_times):
@@ -138,7 +139,7 @@ if __name__ == "__main__":
     # save energy
     string1 = dir_name_var + '/TotEner_warmup.dat'
     np.savetxt(string1, np.column_stack((energies_tot_warm[:, 0], energies_tot_warm[:, 1])),fmt='%.5e', delimiter='\t')
-
+    #----------------------------------------------------------------------------------
 
     energies_tot = np.zeros((int_n_times*int_uncorr_times, 2))
     energies_kin = np.zeros((int_n_times*int_uncorr_times, 2))
