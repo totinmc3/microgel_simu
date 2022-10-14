@@ -83,8 +83,8 @@ if __name__ == "__main__":
     microgel.initialize_bonds()
     microgel.initialize_internoelec()
     if N_cat != 0 or N_an !=0:
-        microgel.charge_beads_homo()
-        # microgel.charge_beads_shell()
+        # microgel.charge_beads_homo()
+        microgel.charge_beads_shell()
     handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
 
     if N_cat != 0 or N_an !=0:
@@ -136,6 +136,9 @@ if __name__ == "__main__":
                 # Anions
                 obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['ion_an'], N_bins)
                 microionProfile_anions = obs_data
+                # Whole microgel
+                obs_data, obs_bins = dp.particle_density_profile(system, [PART_TYPE['polymer_arm'], PART_TYPE['crosslinker'], PART_TYPE['cation'], PART_TYPE['anion']], N_bins)
+                microgelProfile_anions = obs_data
             else:
                 # neutral polymer beads
                 obs_data, obs_bins = dp.particle_density_profile(system, [PART_TYPE['polymer_arm'], PART_TYPE['crosslinker']], N_bins)
@@ -152,8 +155,11 @@ if __name__ == "__main__":
                 # Anions
                 obs_data, obs_bins = dp.particle_density_profile(system, PART_TYPE['ion_an'], N_bins)
                 microionProfile_anions += obs_data
+                # Whole microgel
+                obs_data, obs_bins = dp.particle_density_profile(system, [PART_TYPE['polymer_arm'], PART_TYPE['crosslinker'], PART_TYPE['cation'], PART_TYPE['anion']], N_bins)
+                microgelProfile_anions += obs_data
     if ION_PROFILE_BOOL: # tranformation from cartesian to spherical coordinates
-        prof_list = [microionProfile_cations, microionProfile_anions, polymerProfile, cationProfile, anionProfile]
+        prof_list = [microionProfile_cations, microionProfile_anions, polymerProfile, cationProfile, anionProfile, microgelProfile_anions]
         averaged_profile_list = []
         profile_sph_realiz = []
         for count,profile in enumerate(prof_list):
@@ -181,7 +187,8 @@ if __name__ == "__main__":
         3. polymerProfile
         4. cationProfile
         5. anionProfile
-        6. r
+        6. microgelProfile
+        7. r
         '''
 
 
