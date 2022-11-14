@@ -206,8 +206,46 @@ class Microgel:
         #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
 
 
-    def initialize_internoelec(self):
+    def initialize_from_file(self):
+        """ This method initializes a microgel taking positions and bond from a .pdb file.
+            The file must contain information only about neautral arm beads and crosslinkers.
+        """
 
+        print("Initialilze bead positions and bond from a .pdb file")
+        import MDAnalysis
+        u = MDAnalysis.Universe("./traj.pdb")
+
+        Lx, Ly, Lz = u.dimensions[:3]
+        ids = u.atoms.indices
+        types = u.atoms.names
+        positions = np.array(u.atoms.positions, dtype=float)
+        bonds = u.atoms.bonds.indices
+
+        crosslinker_counter = 0
+        arm_counter = 0
+
+        for i in range(len(ids)):
+            if int(types[i][-1])==0:
+                self.system.part.add(id=ids[i], pos=positions[i], type=self.PART_TYPE['crosslinker'], q=0)
+                crosslinker_counter += 1
+            else:
+                self.system.part.add(id=ids[i], pos=positions[i], type=self.PART_TYPE['polymer_arm'], q=0)
+                arm_counter +=1
+
+        fene = FeneBond(**self.FENE_BOND_PARAMS)
+        self.system.bonded_inter.add(fene)
+
+        for bond in bonds:
+            self.system.part[bond[0]].add_bond((fene, bond[1]))
+
+        # center particles in the middle of simulation box
+        com_vec = self.system.analysis.center_of_mass(p_type=self.PART_TYPE['polymer_arm'])
+        diff = com_vec - self.system.box_l/2.
+        self.system.part[:].pos -= diff
+
+        return crosslinker_counter, arm_counter
+
+    def initialize_internoelec(self):
         print("Define interactions (non electrostatic)")
         # Non-bonded Interactions:
         for i,j in itertools.combinations_with_replacement([x for x in self.PART_TYPE], 2):
