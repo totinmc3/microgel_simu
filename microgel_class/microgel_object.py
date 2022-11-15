@@ -3,7 +3,7 @@ from numpy import linalg as LA
 import itertools
 import math
 import random
-import sys
+import sys, os
 
 
 from espressomd.interactions import FeneBond
@@ -213,9 +213,11 @@ class Microgel:
 
         print("Initialilze bead positions and bond from a .pdb file")
         import MDAnalysis
-        u = MDAnalysis.Universe("./traj.pdb")
 
-        Lx, Ly, Lz = u.dimensions[:3]
+        traj_path = os.path.dirname(os.path.abspath(__file__))
+        print(f'{traj_path=}')
+        u = MDAnalysis.Universe(traj_path + "/initial_condition.pdb")
+        
         ids = u.atoms.indices
         types = u.atoms.names
         positions = np.array(u.atoms.positions, dtype=float)
@@ -275,7 +277,7 @@ class Microgel:
             This function picks randomly beads from the particle list for beads with a distance larged than internal radius b from the
             network COM and charge them negatively with valence q such that the total charged is Z_an. It also adds
             the corresponding monovalent counterions, for which wca interaction is also set.
-        
+
         """
 
         print('Charge microgel shell')
