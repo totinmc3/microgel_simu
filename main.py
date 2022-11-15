@@ -73,12 +73,6 @@ if __name__ == "__main__":
         N_an = int(alpha_an * (number_crosslink + number_monomers))
         microgel.N_an = N_an
 
-        if c_salt != 0:
-            print("Add salt to the system")
-            N_salt_ion_pairs = microgel.add_salt()
-            with open(dir_name_var + "system_info.txt", "a") as info_file:
-                print("# of salt anions = {:d}".format(N_salt_ion_pairs), file=info_file)
-                print("# of salt cations = {:d}".format(N_salt_ion_pairs), file=info_file)
 
         # gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
         # shape_list = gyr_tens["shape"]
@@ -97,6 +91,14 @@ if __name__ == "__main__":
         if N_cat != 0 or N_an !=0:
             microgel.charge_beads_homo()
             # microgel.charge_beads_shell()
+
+        if c_salt != 0:
+            print("Add salt to the system")
+            N_salt_ion_pairs = microgel.add_salt()
+            with open(dir_name_var + "system_info.txt", "a") as info_file:
+                print("# of salt anions = {:d}".format(N_salt_ion_pairs), file=info_file)
+                print("# of salt cations = {:d}".format(N_salt_ion_pairs), file=info_file)
+        
         handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
 
         if N_cat != 0 or N_an !=0:
