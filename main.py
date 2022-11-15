@@ -155,6 +155,7 @@ if __name__ == "__main__":
     energies_coul = np.zeros((int_n_times*int_uncorr_times, 2))
     system.time = 0
     counter_energy = 0
+
     for j in range(int_uncorr_times):
         counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, energies_coul, counter_energy)
         com = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
@@ -267,12 +268,24 @@ if __name__ == "__main__":
     6. coulomb energy
     '''
 
+    # Export trajectory to vtf file
     fp = open('trajectory.vtf', mode='w+t')
     # write structure block as header
     espressomd.io.writer.vtf.writevsf(system, fp)
     # write final positions as coordinate block
     espressomd.io.writer.vtf.writevcf(system, fp)
     
+    # Export trajectory to pdb file
+    if True:
+        import MDAnalysis as mda
+        import espressomd.MDA_ESP
+
+        eos = espressomd.MDA_ESP.Stream(system)
+        u = mda.Universe(eos.topology, eos.trajectory)
+        u.atoms.write("trajectory.pdb")
+        print("===> The initial configuration has been writen to trajectory.pdb ")
+
+
     # visualizer = visualization.openGLLive(system)
     # visualizer.run()
     # # visualizer.screenshot("results/screenshot_finconfig.png")
