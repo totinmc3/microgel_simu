@@ -216,7 +216,7 @@ class Microgel:
 
         traj_path = os.path.dirname(os.path.abspath(__file__))
         print(f'{traj_path=}')
-        u = MDAnalysis.Universe(traj_path + "/initial_condition.pdb")
+        u = MDAnalysis.Universe(traj_path + "/initial_condition_Nmonch40.pdb")
         
         Lx, Ly, Lz = u.dimensions[:3]
         ids = u.atoms.indices

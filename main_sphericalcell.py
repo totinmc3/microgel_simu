@@ -9,7 +9,7 @@ import espressomd
 from espressomd import electrostatics
 from espressomd.interactions import *
 from espressomd import polymer
-from espressomd import visualization
+# from espressomd import visualization
 from espressomd.pair_criteria import DistanceCriterion
 from espressomd.cluster_analysis import ClusterStructure
 import espressomd.io.writer.vtf
@@ -99,9 +99,6 @@ if __name__ == "__main__":
             handler.initialize_elec(system,P3M_PARAMS)
 
         system.thermostat.set_langevin(**LANGEVIN_PARAMS)
-
-        visualizer = visualization.openGLLive(system)
-        visualizer.run()
 
         system.time = 0
 
