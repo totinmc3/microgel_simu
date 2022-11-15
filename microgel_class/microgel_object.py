@@ -218,9 +218,10 @@ class Microgel:
         print(f'{traj_path=}')
         u = MDAnalysis.Universe(traj_path + "/initial_condition.pdb")
         
+        Lx, Ly, Lz = u.dimensions[:3]
         ids = u.atoms.indices
         types = u.atoms.names
-        positions = np.array(u.atoms.positions, dtype=float)
+        positions = np.mod(np.array(u.atoms.positions, dtype=float), Lx) # np.mod to get folded positions
         bonds = u.atoms.bonds.indices
 
         crosslinker_counter = 0
@@ -258,26 +259,59 @@ class Microgel:
         self.system.part.add(pos=np.random.random((N_ions, 3)) * self.system.box_l, type=[particle_type] * N_ions, q=[particle_charge] * N_ions)
         print(f" # of particles = {len(self.system.part[:])}")
 
+    def __insert_ions_sphericalcell(self, N_ions, particle_type, particle_charge, R):
+        """ Add N_ions of type particle_type and charge particle_charge randomly distributed
+            inside a shell of inner radius sphere of 1.1*R_g and outter radius R
+        """
 
-    def charge_beads_homo(self):
+        if not R<self.system.box_l[0]/2:
+            sys.exit("Error in function call __insert_ions_sphericalcell(): cell radius R > box_l/2. Take a larger simulation box.")
+
+        def gen_ion_positions():
+            gyr_tens = self.system.analysis.gyration_tensor(p_type=[self.PART_TYPE['crosslinker'], self.PART_TYPE['polymer_arm'], self.PART_TYPE['cation'], self.PART_TYPE['anion']])
+
+            args = [1.1*np.sqrt(gyr_tens["Rg^2"]), R, N_ions]
+            radii = np.random.uniform(*args)
+
+            theta = np.random.uniform(0, math.pi, N_ions)
+            phi = np.random.uniform(0, 2*math.pi, N_ions)
+
+            xs = radii * np.cos(phi) * np.sin(theta) + self.system.box_l[0]/2
+            ys = radii * np.sin(phi) * np.sin(theta) + self.system.box_l[1]/2
+            zs = radii * np.cos(theta) + self.system.box_l[2]/2
+
+            return np.stack((xs, ys, zs), axis = -1)
+        
+        ion_positions = gen_ion_positions()
+        self.system.part.add(pos=ion_positions, type=[particle_type] * N_ions, q=[particle_charge] * N_ions)
+        print(f" # of particles = {len(self.system.part[:])}")
+
+
+    def charge_beads_homo(self, R=0):
         """
             This function picks randomly beads from the particle list and charge them negatively with valence q = 1. It also adds
             the corresponding counterions, for which wca interaction is also set.
-        
+
+            If R!=0 is given, the microions are distributed inside a spherical shell of radius R. Otherwise, in whole simulation box.
         """
         print('Charge microgel homogeneously')
         part_rdm_list = random.sample(range(len(self.system.part[:])-1), self.N_an)
         self.system.part[part_rdm_list].q = [-1] * self.N_an
         self.system.part[part_rdm_list].type = [self.PART_TYPE['anion']] * self.N_an
-        self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
+        if R==0:
+            self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
+        else:
+            self.__insert_ions_sphericalcell(self.N_an, self.PART_TYPE["ion_cat"], +1, R)
+
         assert abs(sum(self.system.part[:].q)) < 1e-10
 
-    def charge_beads_shell(self):
+    def charge_beads_shell(self, R=0):
         """
             This function picks randomly beads from the particle list for beads with a distance larged than internal radius b from the
             network COM and charge them negatively with valence q such that the total charged is Z_an. It also adds
             the corresponding monovalent counterions, for which wca interaction is also set.
 
+            If R!=0 is given, the microions are distributed inside a spherical shell of radius R. Otherwise, in whole simulation box.
         """
 
         print('Charge microgel shell')
@@ -303,18 +337,27 @@ class Microgel:
         
         self.system.part[outter_bead_list].q = [-charge_per_bead] * n_outter_beads
         self.system.part[outter_bead_list].type = [self.PART_TYPE['anion']] * n_outter_beads
-        self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
+        if R==0:
+            self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
+        else:
+            self.__insert_ions_sphericalcell(self.N_an, self.PART_TYPE["ion_cat"], +1, R)
         assert abs(sum(self.system.part[:].q)) < 1e-10
 
-    def add_salt(self):
+    def add_salt(self, R=0):
         """
             This function adds salt ions (anions and cations) randomly distributed in the whole volume.
         
+            If R!=0 is given, the microions are distributed inside a spherical shell of radius R. Otherwise, in whole simulation box.
         """
 
-        if self.N_salt_ion_pairs > 0:
-            self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["ion_cat"], +1)
-            self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["ion_an"], -1)
+        if self.c_salt > 0:
+            if R==0:
+                self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["ion_cat"], +1)
+                self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["ion_an"], -1)
+            else:
+                self.N_salt_ion_pairs = int(self.c_salt * 4 * math.pi * R**3 / 3) # number of salt ion pairs
+                self.__insert_ions_sphericalcell(self.N_salt_ion_pairs, self.PART_TYPE["ion_cat"], +1, R)
+                self.__insert_ions_sphericalcell(self.N_salt_ion_pairs, self.PART_TYPE["ion_an"], -1, R)
 
         print("Total number of ion pairs: ", self.N_salt_ion_pairs)
         print("Total number of particles: ", len(self.system.part[:]))
@@ -323,3 +366,16 @@ class Microgel:
         return self.N_salt_ion_pairs
 
 
+    def add_cell_boundary(self, R):
+        """
+            This fnuction implements a spherical cell boundary with WCA interaction of radiuss R with center
+            at the box center [box_l/2, box_l/2, box_l/2]
+        """
+        import espressomd.shapes
+
+        SHAPE_TYPE = {'sphere' : 9}
+        sphere = espressomd.shapes.Sphere(center=self.system.box_l/2, radius=R, direction=-1)
+        self.system.constraints.add(shape=sphere, particle_type=SHAPE_TYPE['sphere'])
+
+        for j in [x for x in self.PART_TYPE]:
+            self.system.non_bonded_inter[SHAPE_TYPE['sphere'], self.PART_TYPE[j]].wca.set_params(**self.NONBOND_WCA_PARAMS)
