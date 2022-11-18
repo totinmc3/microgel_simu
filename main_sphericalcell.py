@@ -135,6 +135,7 @@ if __name__ == "__main__":
 
         pbar.update(1)
 
+    checkpoint.save()
     pbar.close()
     
     print("\nEnd warmup")
@@ -151,16 +152,6 @@ if __name__ == "__main__":
     energies_coul = np.zeros((int_n_times*int_uncorr_times, 2))
     system.time = 0
     counter_energy = 0
-
-    # Export trajectory to pdb file
-    if True:
-        import MDAnalysis as mda
-        import espressomd.MDA_ESP
-
-        eos = espressomd.MDA_ESP.Stream(system)
-        u = mda.Universe(eos.topology, eos.trajectory)
-        u.atoms.write("traj.pdb")
-        print("===> The initial configuration has been writen to traj.pdb ")
 
     for j in range(int_uncorr_times):
         counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, energies_coul, counter_energy)

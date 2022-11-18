@@ -141,6 +141,7 @@ if __name__ == "__main__":
 
         pbar.update(1)
 
+    checkpoint.save()
     pbar.close()
     
     print("\nEnd warmup")
