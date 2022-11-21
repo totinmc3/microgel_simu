@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH --job-name=MICROGEL
+
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=mbrito@icp.uni-stuttgart.de
+
+#SBATCH --time=48:00:00
+#SBATCH -n 8
+
+module load gcc/8.4.0
+module load python cmake openmpi fftw boost
+module load py-numpy py-scipy py-cython py-tqdm py-mdanalysis
+
+ESPRESSO_PATH=/beegfs/work/mbrito/build_2/pypresso
+MICROGEL_CODE=/beegfs/work/mbrito/RUN_microgel_side2_diffNmon_homo/Nmon_40/main.py
+
+srun $ESPRESSO_PATH $MICROGEL_CODE $1
