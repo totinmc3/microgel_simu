@@ -19,6 +19,7 @@ from system_parameters import *
 from microgel_class import microgel_object
 from handling import handler
 from analysis import densityProfile_calc as dp
+from analysis import com as com_mod
 
 
 HAS_A_CHECKPOINT = os.path.exists(CHECK_NAME)
@@ -155,7 +156,7 @@ if __name__ == "__main__":
 
     for j in range(int_uncorr_times):
         counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, energies_coul, counter_energy)
-        com = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
+        com = com_mod.com_calculation(system, PART_TYPE['polymer_arm'],PART_TYPE['cation'], PART_TYPE['anion'])
         print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
         gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm'], PART_TYPE['cation'], PART_TYPE['anion']])
         shape_list = gyr_tens["shape"]
@@ -166,7 +167,7 @@ if __name__ == "__main__":
             print("Compute density profiles")
             # Shifting the COM of the cluster ot the center of the box
             print("\tShift COM")
-            com_vec = system.analysis.center_of_mass(p_type=PART_TYPE['polymer_arm'])
+            com_vec = com_mod.com_calculation(system, PART_TYPE['polymer_arm'],PART_TYPE['cation'], PART_TYPE['anion'])
             diff = com_vec - system.box_l/2.
             system.part[:].pos -= diff
 
