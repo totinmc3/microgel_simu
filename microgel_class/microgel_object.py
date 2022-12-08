@@ -68,8 +68,7 @@ class Microgel:
             id_num += 1
         return id_num, id_crosslinks_in_cell
 
-
-    def __arms_unit_cell(self, id_crosslinks_in_cell, id_num):
+    def __arms_unit_cell(self):
         """
             locate the arm polymer beads between the crosslinker beads given in id_crosslinks_in_cell
             for a single unit cell
@@ -81,17 +80,14 @@ class Microgel:
 
         diff_mod = self.Nbeads_arm + 1 # minimal crosslinker-crosslinker distance in units of sigma
 
-        for i,j in itertools.combinations(id_crosslinks_in_cell, 2):
-            diff_vec = self.system.part[i].pos-self.system.part[j].pos
+        for part_i,part_j in itertools.combinations(self.system.part[:], 2):
+            diff_vec = part_i.pos-part_j.pos
             if LA.norm(diff_vec) < 1.01 * diff_mod:
                 iter_init = 1
                 iter_end = self.Nbeads_arm+1
                 for l in range(iter_init,iter_end):
-                    vec_pos = self.system.part[j].pos + diff_vec * l / (self.Nbeads_arm + 1)
-                    self.system.part.add(id=id_num, pos=vec_pos, type=self.PART_TYPE['polymer_arm'])
-                    id_num += 1
-
-        return id_num
+                    vec_pos = part_j.pos + diff_vec * l / (self.Nbeads_arm + 1)
+                    self.system.part.add(pos=vec_pos, type=self.PART_TYPE['polymer_arm'])
 
 
     def __remove_outterCrosslinker(self, radius, sphere_center, id_crosslinks_matrix):
@@ -100,19 +96,17 @@ class Microgel:
             
             radius: critical radius
             sphere_center:  center of the critical sphere
-            id_crosslinks_matrix: list with the id's of the crosslinkers
         """
-        new_id_crosslinks_matrix = []
-        sphere_center = np.array(sphere_center) # in units of a
-        for id_crosslinks_list in id_crosslinks_matrix:
-            iter_list = id_crosslinks_list
-            for i in iter_list:
-                if LA.norm(self.system.part[i].pos-sphere_center) > radius:
-                    self.system.part[i].remove()
-                    id_crosslinks_list.remove(i)
-            new_id_crosslinks_matrix.append(id_crosslinks_list)
-        return new_id_crosslinks_matrix
 
+        sphere_center = np.array(sphere_center) # in units of a
+        for part in self.system.part[:]:
+            if LA.norm(part.pos-sphere_center) > radius:
+                i = part.id
+                self.system.part[i].remove()
+        
+        new_id_crosslinks_matrix = self.system.part[:].id
+        
+        return new_id_crosslinks_matrix
 
     def __remove_double_particles(self):
         """ For overlapping beads, it keeps only one and removes the rest """
@@ -152,10 +146,10 @@ class Microgel:
         id_num = 0
         id_crosslinks_matrix = [] # list containeng id-lists of crosslinkers of each unit cell
 
-        cell_repeat = 2 # number of diamond lattice cells per axis
-        remove_ref = {2: 1.7, 3: 1.9} # criterium radius for bead removal depending on cell_repeat
+        cell_repeat = 4 # number of diamond lattice cells per axis
+        remove_ref = {2: 1.7, 3: 1.9, 4: 1.3} # 4: 1.7 # criterium radius for bead removal depending on cell_repeat
 
-        center_shift = 0.95*self.system.box_l[0] / 2 - a * cell_repeat / 2
+        center_shift = self.system.box_l[0] / 2 - a * cell_repeat / 2
 
         shift_list = []
         for i,j,k in itertools.product([x for x in range(cell_repeat)], repeat=3):
@@ -170,11 +164,9 @@ class Microgel:
         radius = remove_ref[cell_repeat]*a
         id_crosslinks_matrix = self.__remove_outterCrosslinker(radius, sphere_center, id_crosslinks_matrix)
         
-        for id_crosslinks_in_cell in id_crosslinks_matrix:
-            id_num = self.__arms_unit_cell(id_crosslinks_in_cell, id_num)
-
-        id_crosslinks_matrix = self.__remove_deadendCrosslinker(id_crosslinks_matrix)
         self.__remove_double_particles()
+
+        self.__arms_unit_cell()
 
         #------------- Reload particles for continuous id list -------------
         crosslinker_pos_list = []
