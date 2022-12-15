@@ -43,13 +43,13 @@ if __name__ == "__main__":
     print("System initialization")
 
     parser = argparse.ArgumentParser(description='Process running parameters.')
-    # parser.add_argument('box_size', metavar='box_size', type=int, help='box size')
+    parser.add_argument('box_size', metavar='box_size', type=int, help='box size')
     # parser.add_argument('N_an', metavar='N_an', type=int, help='Number of anionic beads per microgel')
     parser.add_argument('alpha_an', metavar='alpha_an', type=float, help='anionic ionization degree')
     # parser.add_argument('N_cat', metavar='N_cat', type=int, help='Number of cationic beads per microgel')
     argm = parser.parse_args()
 
-    # box_l = argm.box_size
+    box_l = argm.box_size
     alpha_an = argm.alpha_an
     # N_cat = argm.N_cat
 
@@ -70,7 +70,8 @@ if __name__ == "__main__":
         system.cell_system.skin = skin
 
         microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an, c_salt)
-        number_crosslink, number_monomers = microgel.initialize_diamondLattice()
+        # number_crosslink, number_monomers = microgel.initialize_diamondLattice()
+        number_crosslink, number_monomers = microgel.initialize_from_file()
         N_an = int(alpha_an * (number_crosslink + number_monomers))
         microgel.N_an = N_an
 
@@ -87,7 +88,7 @@ if __name__ == "__main__":
             print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
             print("# of chains = {:d}".format(int(number_monomers/Nbeads_arm)), file=info_file)
 
-        microgel.initialize_bonds()
+        # microgel.initialize_bonds()
         microgel.initialize_internoelec()
         if N_cat != 0 or N_an !=0:
             microgel.charge_beads_homo()
@@ -104,6 +105,21 @@ if __name__ == "__main__":
 
         if N_cat != 0 or N_an !=0:
             handler.initialize_elec(system,P3M_PARAMS)
+
+        fp_ic = open('trajectory_init_cond.vtf', mode='w+t')
+        espressomd.io.writer.vtf.writevsf(system, fp_ic)
+        espressomd.io.writer.vtf.writevcf(system, fp_ic)
+        fp_ic.close()
+
+        # Export init condition to pdb file
+        if True:
+            import MDAnalysis as mda
+            import espressomd.MDA_ESP
+
+            eos = espressomd.MDA_ESP.Stream(system)
+            u = mda.Universe(eos.topology, eos.trajectory)
+            u.atoms.write("trajectory_init_cond.pdb")
+            print("===> The initial configuration has been writen to trajectory_init_cond.pdb ")
 
         system.thermostat.set_langevin(**LANGEVIN_PARAMS)
 
@@ -144,6 +160,16 @@ if __name__ == "__main__":
 
     checkpoint.save()
     pbar.close()
+
+     # Export trajectory to pdb file
+    if True:
+        import MDAnalysis as mda
+        import espressomd.MDA_ESP
+
+        eos = espressomd.MDA_ESP.Stream(system)
+        u = mda.Universe(eos.topology, eos.trajectory)
+        u.atoms.write("trajectory_0.pdb")
+        print("===> The initial configuration has been writen to trajectory_0.pdb ")
     
     print("\nEnd warmup")
 
