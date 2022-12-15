@@ -43,7 +43,7 @@ if __name__ == "__main__":
     print("System initialization")
 
     parser = argparse.ArgumentParser(description='Process running parameters.')
-    parser.add_argument('box_size', metavar='box_size', type=int, help='box size')
+    parser.add_argument('box_size', metavar='box_size', type=float, help='box size')
     # parser.add_argument('N_an', metavar='N_an', type=int, help='Number of anionic beads per microgel')
     parser.add_argument('alpha_an', metavar='alpha_an', type=float, help='anionic ionization degree')
     # parser.add_argument('N_cat', metavar='N_cat', type=int, help='Number of cationic beads per microgel')
