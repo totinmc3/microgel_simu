@@ -161,8 +161,13 @@ if __name__ == "__main__":
     checkpoint.save()
     pbar.close()
 
-     # Export trajectory to pdb file
-    if True:
+    # Export trajectory to vtf file
+    fp_0 = open('trajectory_0.vtf', mode='w+t')
+    espressomd.io.writer.vtf.writevsf(system, fp_0)
+    espressomd.io.writer.vtf.writevcf(system, fp_0)
+    fp_0.close()
+    # Export trajectory to pdb file
+    if False:
         import MDAnalysis as mda
         import espressomd.MDA_ESP
 
@@ -306,7 +311,7 @@ if __name__ == "__main__":
     espressomd.io.writer.vtf.writevcf(system, fp)
     
     # Export trajectory to pdb file
-    if True:
+    if False:
         import MDAnalysis as mda
         import espressomd.MDA_ESP
 
