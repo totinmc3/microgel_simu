@@ -46,13 +46,14 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Process running parameters.')
     parser.add_argument('box_size', metavar='box_size', type=float, help='box size')
-    # parser.add_argument('N_an', metavar='N_an', type=int, help='Number of anionic beads per microgel')
+    parser.add_argument('Nbeads_arm', metavar='Nbeads_arm', type=int, help='Number of beads per chain')
     #parser.add_argument('alpha_an', metavar='alpha_an', type=float, help='anionic ionization degree')
     parser.add_argument('pH_res', metavar='pH_res', type=float, help='pH in the reservoir')
     # parser.add_argument('N_cat', metavar='N_cat', type=int, help='Number of cationic beads per microgel')
     argm = parser.parse_args()
 
     box_l = argm.box_size
+    Nbeads_arm = argm.Nbeads_arm
     PH_VALUE_RES = argm.pH_res
     #alpha_an = argm.alpha_an
     # N_cat = argm.N_cat
@@ -66,8 +67,6 @@ if __name__ == "__main__":
         ##### creating checkpointing
         checkpoint = checkpointing.Checkpoint(checkpoint_id = CHECK_NAME, checkpoint_path = '.')
 
-        system_info(dir_name_var)
-
         system = espressomd.System(box_l=[box_l,box_l,box_l])
         system.periodicity = [True, True, True]
         system.time_step = dt
@@ -75,7 +74,7 @@ if __name__ == "__main__":
 
         microgel = microgel_object.Microgel(system, FENE_BOND_PARAMS, PART_TYPE, NONBOND_WCA_PARAMS, Nbeads_arm, cell_unit, N_cat, N_an, c_salt)
         # number_crosslink, number_monomers = microgel.initialize_diamondLattice()
-        number_crosslink, number_monomers = microgel.initialize_from_file()
+        number_crosslink, number_monomers = microgel.initialize_from_file(Nbeads_arm)
         alpha_HH =  1 / (1 + 10**(pKa+1.5-PH_VALUE_RES))
         N_an = int(alpha_HH * (number_crosslink + number_monomers))
         #print(system.part)
@@ -84,7 +83,7 @@ if __name__ == "__main__":
         #for p in system.part:
         #    print(p.type)
 
-
+        system_info(dir_name_var)
 
         # gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
         # shape_list = gyr_tens["shape"]
@@ -362,7 +361,9 @@ if __name__ == "__main__":
         counter_energy = handler.main_integration(system, int_n_times, int_steps, energies_tot, energies_kin, energies_nonbon, energies_bon, energies_coul, counter_energy)
         HA =  system.number_of_particles(type = PART_TYPE["polymer_arm"])
         A =  system.number_of_particles(type = PART_TYPE["anion"])
-        alphas.append(A / (HA + A))
+        ionization_degree = A / (HA + A)
+        alphas.append(ionization_degree)
+        print('%.8f' % (ionization_degree), file = open(dir_name_var + "ionization_degree.dat", "a"))
         com = com_mod.com_calculation(system, PART_TYPE['polymer_arm'],PART_TYPE['cation'], PART_TYPE['anion'])
         print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
         gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm'], PART_TYPE['cation'], PART_TYPE['anion']])
