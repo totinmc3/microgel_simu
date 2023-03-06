@@ -33,7 +33,10 @@ PART_TYPE = {'crosslinker' : 0,
             'cation' : 2,
             'anion' : 3,
             'ion_cat' : 4,
-            'ion_an' : 5}
+            'ion_an' : 5,
+            'salt_cat': 6,
+            'salt_an': 7,
+            'OH': 8}
 
 # Langevin thermostat parameters
 kBT = 1.0                       # temperature

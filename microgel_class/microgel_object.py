@@ -198,7 +198,7 @@ class Microgel:
         #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
 
 
-    def initialize_from_file(self):
+    def initialize_from_file(self, mon_per_chain=40):
         """ This method initializes a microgel taking positions and bond from a .pdb file.
             The file must contain information only about neautral arm beads and crosslinkers.
         """
@@ -208,7 +208,7 @@ class Microgel:
 
         traj_path = os.path.dirname(os.path.abspath(__file__))
         print(f'{traj_path=}')
-        u = MDAnalysis.Universe(traj_path + "/initial_condition_Nmonch40.pdb")
+        u = MDAnalysis.Universe(traj_path + "/initial_condition_Nmonch" + str(int(mon_per_chain)) + ".pdb")
         
         Lx, Ly, Lz = u.dimensions[:3]
         ids = u.atoms.indices
@@ -344,12 +344,12 @@ class Microgel:
 
         if self.c_salt > 0:
             if R==0:
-                self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["ion_cat"], +1)
-                self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["ion_an"], -1)
+                self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["salt_cat"], +1)
+                self.__insert_ions(self.N_salt_ion_pairs, self.PART_TYPE["salt_an"], -1)
             else:
                 self.N_salt_ion_pairs = int(self.c_salt * 4 * math.pi * R**3 / 3) # number of salt ion pairs
-                self.__insert_ions_sphericalcell(self.N_salt_ion_pairs, self.PART_TYPE["ion_cat"], +1, R)
-                self.__insert_ions_sphericalcell(self.N_salt_ion_pairs, self.PART_TYPE["ion_an"], -1, R)
+                self.__insert_ions_sphericalcell(self.N_salt_ion_pairs, self.PART_TYPE["salt_cat"], +1, R)
+                self.__insert_ions_sphericalcell(self.N_salt_ion_pairs, self.PART_TYPE["salt_an"], -1, R)
 
         print("Total number of ion pairs: ", self.N_salt_ion_pairs)
         print("Total number of particles: ", len(self.system.part[:]))
