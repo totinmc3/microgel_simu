@@ -305,7 +305,6 @@ if __name__ == "__main__":
     # Warmup --------------------------------------------------------------------------
     print("Warmup integration") # it appears just the first time the function is called
         
-    warm_n_times = 500
     pbar = tqdm(desc='Warmup loop', total=warm_n_times)
     while (iter_warmup < warm_n_times):
         if iter_warmup%CHECKPOINT_PERIOD == 0:
@@ -318,7 +317,7 @@ if __name__ == "__main__":
         HA =  system.number_of_particles(type = PART_TYPE["polymer_arm"])
         A =  system.number_of_particles(type = PART_TYPE["anion"])
         print("Current degree of ionization:", A / (HA + A))
-        #energies_tot_warm[iter_warmup] = (system.time, system.analysis.energy()['total'])
+        energies_tot_warm[iter_warmup] = (system.time, system.analysis.energy()['total'])
         iter_warmup += 1
 
         pbar.update(1)
@@ -353,7 +352,6 @@ if __name__ == "__main__":
     energies_nonbon = np.zeros((int_n_times*int_uncorr_times, 2))
     energies_bon = np.zeros((int_n_times*int_uncorr_times, 2))
     energies_coul = np.zeros((int_n_times*int_uncorr_times, 2))
-    alphas = np.zeros((int_n_times*int_uncorr_times, 2))
     system.time = 0
     counter_energy = 0
 
@@ -362,7 +360,6 @@ if __name__ == "__main__":
         HA =  system.number_of_particles(type = PART_TYPE["polymer_arm"])
         A =  system.number_of_particles(type = PART_TYPE["anion"])
         ionization_degree = A / (HA + A)
-        alphas.append(ionization_degree)
         print('%.8f' % (ionization_degree), file = open(dir_name_var + "ionization_degree.dat", "a"))
         com = com_mod.com_calculation(system, PART_TYPE['polymer_arm'],PART_TYPE['cation'], PART_TYPE['anion'])
         print('%.5e\t%.5e\t%.5e' % (com[0], com[1], com[2]), file = open(dir_name_var + "center_of_mass.dat", "a"))
