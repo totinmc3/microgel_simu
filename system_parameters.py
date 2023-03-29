@@ -10,6 +10,7 @@ sigma = 0.355               # sigma in nm for molar units
 box_l = 400                 # box size
 dt = 0.01                   # time step
 skin = 0.4                  # skin of Verlet list
+pKa = 4.0
 
 
 Nbeads_arm = 10
@@ -17,7 +18,7 @@ cell_unit = 4 * (Nbeads_arm + 1) / np.sqrt(3)
 N_cat = 0   # number of cationic beads in microgel network
 N_an = 10   # number of anionic beads in microgel network
 
-c_salt_molar = 0    # salt concentration in molar
+c_salt_molar = 0.01    # salt concentration in molar
 c_salt = c_salt_molar * conversion_factor * sigma**3      # salt-ion-pair concentration in units of sigma^3
 
 # Interaction and bonds:
