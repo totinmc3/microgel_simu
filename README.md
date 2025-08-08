@@ -22,7 +22,7 @@ For running on several MPI ranks:
 mpiexec -n <N_ranks> <Path/to/ESPResSo>/pypresso <Path/to/repository>/microgel_simu/main.py <param1> <param2> ...
 ```
 
-    with `<N_ranks> ` being the number of ranks.
+with `<N_ranks> ` being the number of ranks.
 3.  Bash scripts can be used for iterating over given parameters, or further automation.
 
 ## Core Components
