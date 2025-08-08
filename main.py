@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import linalg as LA, number, string_
+from numpy import linalg as LA, number
 import argparse
 import os
 import math
@@ -111,16 +111,6 @@ if __name__ == "__main__":
         espressomd.io.writer.vtf.writevcf(system, fp_ic)
         fp_ic.close()
 
-        # Export init condition to pdb file
-        if True:
-            import MDAnalysis as mda
-            import espressomd.MDA_ESP
-
-            eos = espressomd.MDA_ESP.Stream(system)
-            u = mda.Universe(eos.topology, eos.trajectory)
-            u.atoms.write("trajectory_init_cond.pdb")
-            print("===> The initial configuration has been writen to trajectory_init_cond.pdb ")
-
         system.thermostat.set_langevin(**LANGEVIN_PARAMS)
 
         system.time = 0
@@ -206,7 +196,7 @@ if __name__ == "__main__":
             print("\tShift COM")
             com_vec = com_mod.com_calculation(system, PART_TYPE['polymer_arm'],PART_TYPE['cation'], PART_TYPE['anion'])
             diff = com_vec - system.box_l/2.
-            system.part[:].pos -= diff
+            system.part.all().pos -= diff
 
             print("\tExplicit calculation")
             if j==0:
@@ -284,10 +274,10 @@ if __name__ == "__main__":
             
     # save data
     string1 = dir_name_var + "positions.dat"
-    Npart_tot = len(system.part[:])
+    Npart_tot = len(system.part.all())
     i = np.arange(0,Npart_tot,1)
-    position_matrix = np.asarray(system.part[:].pos_folded)
-    particle_type = np.asarray(system.part[:].type)
+    position_matrix = np.asarray(system.part.all().pos_folded)
+    particle_type = np.asarray(system.part.all().type)
     np.savetxt(string1, np.column_stack((i,particle_type,position_matrix[:,0],position_matrix[:,1],
                                             position_matrix[:,2])),fmt='%d\t%d\t%.6f\t%.6f\t%.6f', delimiter='\t')
 

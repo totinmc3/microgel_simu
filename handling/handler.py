@@ -12,7 +12,7 @@ def remove_overlap(system, sd_params):
 
     # Initialize integrator to obtain initial forces
     system.integrator.run(0)
-    maxforce = np.max(np.linalg.norm(system.part[:].f, axis=1))
+    maxforce = np.max(np.linalg.norm(system.part.all().f, axis=1))
     energy = system.analysis.energy()['total']
 
     i = 0
@@ -20,7 +20,7 @@ def remove_overlap(system, sd_params):
         prev_maxforce = maxforce
         prev_energy = energy
         system.integrator.run(sd_params['emstep'])
-        maxforce = np.max(np.linalg.norm(system.part[:].f, axis=1))
+        maxforce = np.max(np.linalg.norm(system.part.all().f, axis=1))
         relforce = np.abs((maxforce - prev_maxforce) / prev_maxforce)
         energy = system.analysis.energy()['total']
         relener = np.abs((energy - prev_energy) / prev_energy)
@@ -106,11 +106,10 @@ def main_integration(system, int_n_times, int_steps ,energies_tot, energies_kin,
         energies_coul[counter_energy] = (system.time, system.analysis.energy()['coulomb'])
         counter_energy += 1
     
-    print('\rSimulation complete')
     return counter_energy
 
 
 def initialize_elec(system,P3M_PARAMS):
         print("Define electrostatic interactions")
-        p3m = P3M(**P3M_PARAMS)
-        system.actors.add(p3m)
+        solver = P3M(**P3M_PARAMS)
+        system.electrostatics.solver = solver

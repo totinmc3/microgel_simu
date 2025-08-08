@@ -80,7 +80,7 @@ class Microgel:
 
         diff_mod = self.Nbeads_arm + 1 # minimal crosslinker-crosslinker distance in units of sigma
 
-        for part_i,part_j in itertools.combinations(self.system.part[:], 2):
+        for part_i,part_j in itertools.combinations(self.system.part.all(), 2):
             diff_vec = part_i.pos-part_j.pos
             if LA.norm(diff_vec) < 1.01 * diff_mod:
                 iter_init = 1
@@ -99,27 +99,27 @@ class Microgel:
         """
 
         sphere_center = np.array(sphere_center) # in units of a
-        for part in self.system.part[:]:
+        for part in self.system.part.all():
             if LA.norm(part.pos-sphere_center) > radius:
                 i = part.id
-                self.system.part[i].remove()
-        
-        new_id_crosslinks_matrix = self.system.part[:].id
-        
+                self.system.part.by_id(i).remove()
+
+        new_id_crosslinks_matrix = self.system.part.all().id
+
         return new_id_crosslinks_matrix
 
     def __remove_double_particles(self):
         """ For overlapping beads, it keeps only one and removes the rest """
-        id_list = self.system.part[:].id
+        id_list = self.system.part.all().id
         repeated_part_list = []
 
         for i,j in itertools.combinations(id_list, 2):
-            if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.equal_criterion:
+            if LA.norm(self.system.part.by_id(i).pos-self.system.part.by_id(j).pos) < self.equal_criterion:
                 if i not in repeated_part_list:
                     repeated_part_list.append(i) 
-        self.system.part[repeated_part_list].remove()
-    
-    
+        self.system.part.by_ids(repeated_part_list).remove()
+
+
     def __remove_deadendCrosslinker(self, id_crosslinks_matrix):
         """
             Remove deadend crosslinkers and returns an updated id-crosslinked list
@@ -129,8 +129,8 @@ class Microgel:
         for id_crosslinks_list in id_crosslinks_matrix:
             iter_list = id_crosslinks_list
             for i in iter_list:
-                if len(self.system.analysis.nbhood(pos=self.system.part[i].pos, r_catch=1.1))<3:
-                    self.system.part[i].remove()
+                if len(self.system.analysis.nbhood(pos=self.system.part.by_id(i).pos, r_catch=1.1))<3:
+                    self.system.part.by_id(i).remove()
                     id_crosslinks_list.remove(i)
             new_id_crosslinks_matrix.append(id_crosslinks_list)
 
@@ -171,12 +171,12 @@ class Microgel:
         #------------- Reload particles for continuous id list -------------
         crosslinker_pos_list = []
         arm_pos_list = []
-        for part in self.system.part[:]:
+        for part in self.system.part.all():
             if part.type == self.PART_TYPE['crosslinker']:
                 crosslinker_pos_list.append(part.pos)
             else:
                 arm_pos_list.append(part.pos)
-        self.system.part[:].remove()
+        self.system.part.all().remove()
         self.system.part.add(pos=crosslinker_pos_list, type=[self.PART_TYPE['crosslinker']]*len(crosslinker_pos_list))
         self.system.part.add(pos=arm_pos_list, type=[self.PART_TYPE['polymer_arm']]*len(arm_pos_list))
         
@@ -189,10 +189,10 @@ class Microgel:
         self.system.bonded_inter.add(fene)
         
         print(f'bonding_criteria = {self.bonding_criteria}')
-        
-        for i,j in itertools.combinations(self.system.part[:].id, 2):
-            if LA.norm(self.system.part[i].pos-self.system.part[j].pos) < self.bonding_criteria:
-                self.system.part[i].add_bond((fene, j))
+
+        for i,j in itertools.combinations(self.system.part.all().id, 2):
+            if LA.norm(self.system.part.by_id(i).pos-self.system.part.by_id(j).pos) < self.bonding_criteria:
+                self.system.part.by_id(i).add_bond((fene, j))
 
         # for part_pos in self.system.part.pairs():
         #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
@@ -231,12 +231,12 @@ class Microgel:
         self.system.bonded_inter.add(fene)
 
         for bond in bonds:
-            self.system.part[bond[0]].add_bond((fene, bond[1]))
+            self.system.part.by_id(bond[0]).add_bond((fene, bond[1]))
 
         # center particles in the middle of simulation box
         com_vec = self.system.analysis.center_of_mass(p_type=self.PART_TYPE['polymer_arm'])
         diff = com_vec - self.system.box_l/2.
-        self.system.part[:].pos -= diff
+        self.system.part.all().pos -= diff
 
         return crosslinker_counter, arm_counter
 
@@ -249,7 +249,7 @@ class Microgel:
 
     def __insert_ions(self, N_ions, particle_type, particle_charge):
         self.system.part.add(pos=np.random.random((N_ions, 3)) * self.system.box_l, type=[particle_type] * N_ions, q=[particle_charge] * N_ions)
-        print(f" # of particles = {len(self.system.part[:])}")
+        print(f" # of particles = {len(self.system.part.all())}")
 
     def __insert_ions_sphericalcell(self, N_ions, particle_type, particle_charge, R):
         """ Add N_ions of type particle_type and charge particle_charge randomly distributed
@@ -276,7 +276,7 @@ class Microgel:
         
         ion_positions = gen_ion_positions()
         self.system.part.add(pos=ion_positions, type=[particle_type] * N_ions, q=[particle_charge] * N_ions)
-        print(f" # of particles = {len(self.system.part[:])}")
+        print(f" # of particles = {len(self.system.part.all())}")
 
 
     def charge_beads_homo(self, R=0):
@@ -287,15 +287,15 @@ class Microgel:
             If R!=0 is given, the microions are distributed inside a spherical shell of radius R. Otherwise, in whole simulation box.
         """
         print('Charge microgel homogeneously')
-        part_rdm_list = random.sample(range(len(self.system.part[:])-1), self.N_an)
-        self.system.part[part_rdm_list].q = [-1] * self.N_an
-        self.system.part[part_rdm_list].type = [self.PART_TYPE['anion']] * self.N_an
+        part_rdm_list = random.sample(range(len(self.system.part.all())-1), self.N_an)
+        self.system.part.by_ids(part_rdm_list).q = [-1] * self.N_an
+        self.system.part.by_ids(part_rdm_list).type = [self.PART_TYPE['anion']] * self.N_an
         if R==0:
             self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
         else:
             self.__insert_ions_sphericalcell(self.N_an, self.PART_TYPE["ion_cat"], +1, R)
 
-        assert abs(sum(self.system.part[:].q)) < 1e-10
+        assert abs(sum(self.system.part.all().q)) < 1e-10
 
     def charge_beads_shell(self, R=0):
         """
@@ -312,8 +312,8 @@ class Microgel:
         if b > self.cell_unit:
             sys.exit("Error: Internal radius b larger than unit cell size a_cell (for 2x2x2 unit cell gel): take b <= a_cell")
         com = self.system.analysis.center_of_mass(p_type=self.PART_TYPE['polymer_arm'])
-        dist_to_com = LA.norm( self.system.part[:].pos - com, axis=1)
-        index = np.array([x for x in range(len(self.system.part[:]))])
+        dist_to_com = LA.norm( self.system.part.all().pos - com, axis=1)
+        index = np.array([x for x in range(len(self.system.part.all()))])
         zeros = np.zeros_like(index)-1
         outter_bead_list = np.where(dist_to_com > b, index, zeros)
         outter_bead_list = outter_bead_list[outter_bead_list !=-1]
@@ -326,14 +326,14 @@ class Microgel:
             outter_bead_list = random.sample(list(outter_bead_list), self.N_an)
             charge_per_bead = 1
             n_outter_beads = len(outter_bead_list)
-        
-        self.system.part[outter_bead_list].q = [-charge_per_bead] * n_outter_beads
-        self.system.part[outter_bead_list].type = [self.PART_TYPE['anion']] * n_outter_beads
+
+        self.system.part.by_ids(outter_bead_list).q = [-charge_per_bead] * n_outter_beads
+        self.system.part.by_ids(outter_bead_list).type = [self.PART_TYPE['anion']] * n_outter_beads
         if R==0:
             self.__insert_ions(self.N_an, self.PART_TYPE["ion_cat"], +1)
         else:
             self.__insert_ions_sphericalcell(self.N_an, self.PART_TYPE["ion_cat"], +1, R)
-        assert abs(sum(self.system.part[:].q)) < 1e-10
+        assert abs(sum(self.system.part.all().q)) < 1e-10
 
     def add_salt(self, R=0):
         """
@@ -352,8 +352,8 @@ class Microgel:
                 self.__insert_ions_sphericalcell(self.N_salt_ion_pairs, self.PART_TYPE["salt_an"], -1, R)
 
         print("Total number of ion pairs: ", self.N_salt_ion_pairs)
-        print("Total number of particles: ", len(self.system.part[:]))
-        assert abs(sum(self.system.part[:].q)) < 1e-10
+        print("Total number of particles: ", len(self.system.part.all()))
+        assert abs(sum(self.system.part.all().q)) < 1e-10
 
         return self.N_salt_ion_pairs
 
