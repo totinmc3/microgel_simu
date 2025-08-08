@@ -131,7 +131,6 @@ if __name__ == "__main__":
 
         print("Loaded checkpoint.\n")
 
-    # handler.warmup(system,warm_n_times,warm_steps,dir_name_var,TUNE_SET,TUNE_SKIN_PARAM, checkpoint, CHECKPOINT_PERIOD, iter_warmup)
     # Warmup --------------------------------------------------------------------------
     print("Warmup integration") # it appears just the first time the function is called
         
@@ -156,15 +155,6 @@ if __name__ == "__main__":
     espressomd.io.writer.vtf.writevsf(system, fp_0)
     espressomd.io.writer.vtf.writevcf(system, fp_0)
     fp_0.close()
-    # Export trajectory to pdb file
-    if False:
-        import MDAnalysis as mda
-        import espressomd.MDA_ESP
-
-        eos = espressomd.MDA_ESP.Stream(system)
-        u = mda.Universe(eos.topology, eos.trajectory)
-        u.atoms.write("trajectory_0.pdb")
-        print("===> The initial configuration has been writen to trajectory_0.pdb ")
     
     print("\nEnd warmup")
 
@@ -299,18 +289,4 @@ if __name__ == "__main__":
     espressomd.io.writer.vtf.writevsf(system, fp)
     # write final positions as coordinate block
     espressomd.io.writer.vtf.writevcf(system, fp)
-    
-    # Export trajectory to pdb file
-    if False:
-        import MDAnalysis as mda
-        import espressomd.MDA_ESP
-
-        eos = espressomd.MDA_ESP.Stream(system)
-        u = mda.Universe(eos.topology, eos.trajectory)
-        u.atoms.write("trajectory.pdb")
-        print("===> The initial configuration has been writen to trajectory.pdb ")
-
-
-    # visualizer = visualization.openGLLive(system)
-    # visualizer.run()
-    # # visualizer.screenshot("results/screenshot_finconfig.png")
+    fp.close()
