@@ -5,6 +5,13 @@ Program for simulating a single ionic microgel in a cell to explore swelling pro
 - Polymer are simulated via WCA beads connected with FENE bonds (generic bead-spring model)
 - Electrostatic is incorporated explicitly by charged polymer beads and free WCA co- and counterions 
 
+## Cloning Repository
+
+To clone the repository, run:
+
+```bash
+git clone https://github.com/mebrito/microgel_simu.git
+```
 ## Execution
 
 1. Set both system and simulation parameters in `system_parameter.py` file
@@ -14,7 +21,7 @@ Program for simulating a single ionic microgel in a cell to explore swelling pro
 <Path/to/ESPResSo>/pypresso <Path/to/repository>/microgel_simu/main.py <param1> <param2> ...
 ```
 
-where `<param1>`, `<param1>`, ... are the parsed parameters required. Check `parser.add_argument()`
+where `<param1>`, `<param2>`, ... are the parsed parameters required. Check `parser.add_argument()`
 in `main.py`.
 For running on several MPI ranks:
 
