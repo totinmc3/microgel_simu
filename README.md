@@ -9,15 +9,19 @@ Program for simulating a single ionic microgel in a cell to explore swelling pro
 
 1. Set both system and simulation parameters in `system_parameter.py` file
 2. For running a simulation with single core:
+
 ```bash
 <Path/to/ESPResSo>/pypresso <Path/to/repository>/microgel_simu/main.py <param1> <param2> ...
 ```
-    where `<param1>`, `<param1>`, ... are the parsed parameters required. Check `parser.add_argument()`
-    in `main.py`.
-    For running on several MPI ranks:
+
+where `<param1>`, `<param1>`, ... are the parsed parameters required. Check `parser.add_argument()`
+in `main.py`.
+For running on several MPI ranks:
+
 ```bash
 mpiexec -n <N_ranks> <Path/to/ESPResSo>/pypresso <Path/to/repository>/microgel_simu/main.py <param1> <param2> ...
 ```
+
     with `<N_ranks> ` being the number of ranks.
 3.  Bash scripts can be used for iterating over given parameters, or further automation.
 
