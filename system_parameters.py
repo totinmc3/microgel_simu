@@ -86,7 +86,7 @@ TUNE_SKIN_PARAM = {'min_skin' : 0.1,
                    'adjust_max_skin' : True}
 
 # Density profiles
-ION_PROFILE_BOOL = False
+ION_PROFILE_BOOL = True
 N_bins = int(box_l)
 
 # Checkpointing
