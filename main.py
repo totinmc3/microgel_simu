@@ -33,8 +33,10 @@ def system_info(dir_name_var):
             "# number of anionic beads in microgel network = {:d}".format(N_an),
             file=info_file,
         )
+        print("initial time os =" "{:.2f}".format(system.time), file=info_file) 
 
 
+        
 ###########################################################################################
 ###################                                                     ###################
 #############################             MAIN           ##################################
@@ -156,6 +158,11 @@ if __name__ == "__main__":
     # Warmup --------------------------------------------------------------------------
     print("Warmup integration")  # it appears just the first time the function is called
 
+    fp_time = open(dir_name_var + "/system_info.txt", mode="w+t")
+    fp_movie = open(dir_name_var + "/trajectory_film_warm.vtf", mode="w+t")
+
+    print(f"{'Tiempo sistema':<15}{'Tiempo iteración':<15}", file=fp_time)
+
     pbar = tqdm(desc="Warmup loop", total=warm_n_times)
     while iter_warmup < warm_n_times:
         if iter_warmup % CHECKPOINT_PERIOD == 0:
@@ -170,12 +177,15 @@ if __name__ == "__main__":
             system.time,
             system.analysis.energy()["total"],
         )
+        print(f"{datetime.now().strftime("%H:%M:%S"):<15}{iter_warmup:<15}")
+        espressomd.io.writer.vtf.writevcf(system, fp_movie)
         iter_warmup += 1
-
         pbar.update(1)
 
     checkpoint.save()
     pbar.close()
+    fp_time.close()
+    fp_movie.close()
 
     # Export trajectory to vtf file
     fp_0 = open("trajectory_0.vtf", mode="w+t")

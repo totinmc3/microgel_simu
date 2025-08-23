@@ -10,7 +10,7 @@
 
 LOGFILE="log.log"
 j="$1"		# p value
-plabel="param" # p label
+plabel="alpha_n" # p label
 
  echo "$plabel = $j"
  if [ -d ""$plabel"_$j" ]
@@ -20,6 +20,6 @@ plabel="param" # p label
     mkdir "$plabel"_$j && cd "$_"
  fi
 
- /Users/mbrito/build/pypresso /Users/mbrito/Microgels/microgel_simu/main.py $j
+ /home/tobias/espresso_md/build_Feb25/pypresso /home/tobias/trabajo_afa/microgel_simu/main.py $j
 
 exit
