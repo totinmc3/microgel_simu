@@ -241,7 +241,7 @@ class Microgel:
         # for part_pos in self.system.part.pairs():
         #     id_list = self.system.analysis.nbhood(pos=part_pos, r_catch=self.bonding_criteria)
 
-    def initialize_from_file(self, mon_per_chain=40):
+    def initialize_from_file(self, mon_per_chain):
         """This method initializes a microgel taking positions and bond from a .pdb file.
         The file must contain information only about neautral arm beads and crosslinkers.
         """

@@ -7,7 +7,8 @@ Q_E = 1.0                   # elenetary charge
 conversion_factor = 6.02214/10 # If the density is in molar, multiplication by this factor gives density in number of particles per nm^3
 sigma = 0.355               # sigma in nm for molar units
 # time: derived quantity
-box_l = 400                 # box size
+density = 0.00005
+box_l = np.power(2960/density,1/3)                 # box size
 dt = 0.01                   # time step
 skin = 0.4                  # skin of Verlet list
 pKa = 4.0

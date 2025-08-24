@@ -7,19 +7,21 @@
 
 # execute by: $ ./microgel_exe.sh <p> <proc_iter>
 
-
 LOGFILE="log.log"
-j="$1"		# p value
-plabel="alpha_n" # p label
+plabel="alpha_n" # etiqueta para el parámetro
 
- echo "$plabel = $j"
- if [ -d ""$plabel"_$j" ]
- then
-    cd "$plabel"_$j
- else
-    mkdir "$plabel"_$j && cd "$_"
- fi
+# Lista de valores de j
+for j in $(seq 0.0 0.1 0.9); do
+    echo "$plabel = $j"
 
- /home/tobias/espresso_md/build_Feb25/pypresso /home/tobias/trabajo_afa/microgel_simu/main.py $j
+    dir="${plabel}_$j"
+    if [ -d "$dir" ]; then
+        cd "$dir"
+    else
+        mkdir "$dir" && cd "$dir"
+    fi
 
-exit
+    . /home/tobias/espresso_md/build_Feb25/pypresso /home/tobias/trabajo_afa/microgel_simu/main.py "$j"
+
+    cd ..  # Volver al directorio base para la siguiente iteración
+done

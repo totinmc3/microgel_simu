@@ -14,6 +14,7 @@ from microgel_class import microgel_object
 from handling import handler
 from analysis import densityProfile_calc as dp
 from analysis import com as com_mod
+from datetime import datetime
 
 
 HAS_A_CHECKPOINT = os.path.exists(CHECK_NAME)
@@ -33,7 +34,7 @@ def system_info(dir_name_var):
             "# number of anionic beads in microgel network = {:d}".format(N_an),
             file=info_file,
         )
-        print("initial time os =" "{:.2f}".format(system.time), file=info_file) 
+        print("initial time os =", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), file=info_file)
 
 
         
@@ -46,15 +47,13 @@ if __name__ == "__main__":
     print("System initialization")
 
     parser = argparse.ArgumentParser(description="Process running parameters.")
-    parser.add_argument("box_size", metavar="box_size", type=float, help="box size")
     # parser.add_argument('N_an', metavar='N_an', type=int, help='Number of anionic beads per microgel')
     parser.add_argument(
         "alpha_an", metavar="alpha_an", type=float, help="anionic ionization degree"
     )
     # parser.add_argument('N_cat', metavar='N_cat', type=int, help='Number of cationic beads per microgel')
     argm = parser.parse_args()
-
-    box_l = argm.box_size
+    
     alpha_an = argm.alpha_an
     # N_cat = argm.N_cat
 
@@ -87,7 +86,7 @@ if __name__ == "__main__":
             c_salt,
         )
         # number_crosslink, number_monomers = microgel.initialize_diamondLattice()
-        number_crosslink, number_monomers = microgel.initialize_from_file()
+        number_crosslink, number_monomers = microgel.initialize_from_file(10)
         N_an = int(alpha_an * (number_crosslink + number_monomers))
         microgel.N_an = N_an
 
@@ -159,7 +158,7 @@ if __name__ == "__main__":
     print("Warmup integration")  # it appears just the first time the function is called
 
     fp_time = open(dir_name_var + "/system_info.txt", mode="w+t")
-    fp_movie = open(dir_name_var + "/trajectory_film_warm.vtf", mode="w+t")
+#    fp_movie = open(dir_name_var + "/trajectory_film_warm.vtf", mode="w+t")
 
     print(f"{'Tiempo sistema':<15}{'Tiempo iteración':<15}", file=fp_time)
 
@@ -177,8 +176,8 @@ if __name__ == "__main__":
             system.time,
             system.analysis.energy()["total"],
         )
-        print(f"{datetime.now().strftime("%H:%M:%S"):<15}{iter_warmup:<15}")
-        espressomd.io.writer.vtf.writevcf(system, fp_movie)
+        print(f"{datetime.now().strftime("%H:%M:%S"):<15}{iter_warmup:<15}", file=fp_time)
+ #       espressomd.io.writer.vtf.writevcf(system, fp_movie)
         iter_warmup += 1
         pbar.update(1)
 
