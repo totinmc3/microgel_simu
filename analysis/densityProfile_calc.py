@@ -13,7 +13,7 @@ def particle_density_profile(system, particle_types, N_bins: int):
             if part.type == particle_types:
                 id_list.append(part.id)
     else:
-        for part in system.part[:]:
+        for part in system.part:
             for particle_type in particle_types:
                 if part.type == particle_type:
                     id_list.append(part.id)
