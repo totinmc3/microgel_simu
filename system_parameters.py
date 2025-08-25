@@ -8,7 +8,7 @@ conversion_factor = 6.02214/10 # If the density is in molar, multiplication by t
 sigma = 0.355               # sigma in nm for molar units
 # time: derived quantity
 density = 0.00005
-box_l = np.power(2960/density,1/3)                 # box size
+box_l = np.power(1480/density,1/3)                 # box size
 dt = 0.01                   # time step
 skin = 0.4                  # skin of Verlet list
 pKa = 4.0
@@ -19,7 +19,7 @@ cell_unit = 4 * (Nbeads_arm + 1) / np.sqrt(3)
 N_cat = 0   # number of cationic beads in microgel network
 N_an = 10   # number of anionic beads in microgel network
 
-c_salt_molar = 0.001    # salt concentration in molar
+c_salt_molar = 0.0000    # salt concentration in molar #molar mol/l
 c_salt = c_salt_molar * conversion_factor * sigma**3      # salt-ion-pair concentration in units of sigma^3
 
 # Interaction and bonds:
@@ -30,7 +30,7 @@ FENE_BOND_PARAMS = {'k': 30,             # FENE constant
                     'r_0' : 0.0}
 
 # Particle types
-PART_TYPE = {'crosslinker' : 0,
+PART_TYPE = {'crosslinker' : 0, 
             'polymer_arm' : 1,
             'cation' : 2,
             'anion' : 3,

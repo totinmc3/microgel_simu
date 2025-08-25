@@ -86,7 +86,7 @@ if __name__ == "__main__":
             c_salt,
         )
         # number_crosslink, number_monomers = microgel.initialize_diamondLattice()
-        number_crosslink, number_monomers = microgel.initialize_from_file(10)
+        number_crosslink, number_monomers = microgel.initialize_from_file(Nbeads_arm)
         N_an = int(alpha_an * (number_crosslink + number_monomers))
         microgel.N_an = N_an
 
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     print("Warmup integration")  # it appears just the first time the function is called
 
     fp_time = open(dir_name_var + "/system_info.txt", mode="w+t")
-#    fp_movie = open(dir_name_var + "/trajectory_film_warm.vtf", mode="w+t")
+    fp_movie = open(dir_name_var + "/trajectory_film_warm.vtf", mode="w+t")
 
     print(f"{'Tiempo sistema':<15}{'Tiempo iteración':<15}", file=fp_time)
 
@@ -387,7 +387,7 @@ if __name__ == "__main__":
         """ File columns
         1. microionProfile_cations
         2. microionProfile_anions
-        3. polymerProfile
+        3. polymerProfile, No cuenta cargadas
         4. cationProfile
         5. anionProfile
         6. microgelProfile
