@@ -157,10 +157,10 @@ if __name__ == "__main__":
     # Warmup --------------------------------------------------------------------------
     print("Warmup integration")  # it appears just the first time the function is called
 
-    fp_time = open(dir_name_var + "/system_info.txt", mode="w+t")
+#    fp_time = open(dir_name_var + "/system_info.txt", mode="w+t")
     fp_movie = open(dir_name_var + "/trajectory_film_warm.vtf", mode="w+t")
 
-    print(f"{'Tiempo sistema':<15}{'Tiempo iteración':<15}", file=fp_time)
+#    print(f"{'Tiempo sistema':<15}{'Tiempo iteración':<15}", file=fp_time)
 
     pbar = tqdm(desc="Warmup loop", total=warm_n_times)
     while iter_warmup < warm_n_times:
@@ -176,14 +176,14 @@ if __name__ == "__main__":
             system.time,
             system.analysis.energy()["total"],
         )
-        print(f"{datetime.now().strftime("%H:%M:%S"):<15}{iter_warmup:<15}", file=fp_time)
- #       espressomd.io.writer.vtf.writevcf(system, fp_movie)
+#        print(f"{datetime.now().strftime("%H:%M:%S"):<15}{iter_warmup:<15}", file=fp_time)
+#       espressomd.io.writer.vtf.writevcf(system, fp_movie)
         iter_warmup += 1
         pbar.update(1)
 
     checkpoint.save()
     pbar.close()
-    fp_time.close()
+#    fp_time.close()
     fp_movie.close()
 
     # Export trajectory to vtf file
