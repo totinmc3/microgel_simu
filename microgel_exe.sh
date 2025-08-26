@@ -21,7 +21,7 @@ for j in $(seq 0.0 0.1 0.9); do
         mkdir "$dir" && cd "$dir"
     fi
 
-    . /home/tobias/espresso_md/build_Feb25/pypresso /home/tobias/trabajo_afa/microgel_simu/main.py "$j"
+    mpiexec -n 6 /home/tobias/trabajo/espresso_md/espresso/build/pypresso /home/tobias/trabajo/geles/microgel_simu/main.py "$j"
 
     cd ..  # Volver al directorio base para la siguiente iteración
 done

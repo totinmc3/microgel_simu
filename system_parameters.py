@@ -92,4 +92,4 @@ N_bins = int(box_l)
 
 # Checkpointing
 CHECK_NAME = "chk-res"
-CHECKPOINT_PERIOD = 25
+CHECKPOINT_PERIOD = 500

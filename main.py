@@ -157,33 +157,32 @@ if __name__ == "__main__":
     # Warmup --------------------------------------------------------------------------
     print("Warmup integration")  # it appears just the first time the function is called
 
-#    fp_time = open(dir_name_var + "/system_info.txt", mode="w+t")
-    fp_movie = open(dir_name_var + "/trajectory_film_warm.vtf", mode="w+t")
+    fp_movie = open("trajectory_movie.vtf", mode="w+t")
+    espressomd.io.writer.vtf.writevsf(system, fp_movie)
 
-#    print(f"{'Tiempo sistema':<15}{'Tiempo iteración':<15}", file=fp_time)
+    fp_time = open("tiempo_iteraciones.dat", mode="w+t")
 
     pbar = tqdm(desc="Warmup loop", total=warm_n_times)
     while iter_warmup < warm_n_times:
         if iter_warmup % CHECKPOINT_PERIOD == 0:
             checkpoint.save()
+            fp_time.write( "\trun %d at time=%.0f \n" % (iter_warmup, system.time) )
         if (
             iter_warmup == TUNE_SET["i_val_1"] or iter_warmup == TUNE_SET["i_val_2"]
         ) and TUNE_SET["tune_bool"]:
             system.cell_system.tune_skin(**TUNE_SKIN_PARAM)
         system.integrator.run(warm_steps)  # Default: velocity Verlet algorithm
-        print("\r\trun %d at time=%.0f " % (iter_warmup, system.time), end="")
         energies_tot_warm[iter_warmup] = (
             system.time,
             system.analysis.energy()["total"],
         )
-#        print(f"{datetime.now().strftime("%H:%M:%S"):<15}{iter_warmup:<15}", file=fp_time)
-#       espressomd.io.writer.vtf.writevcf(system, fp_movie)
+        espressomd.io.writer.vtf.writevcf(system, fp_movie)
         iter_warmup += 1
         pbar.update(1)
 
     checkpoint.save()
     pbar.close()
-#    fp_time.close()
+    fp_time.close()
     fp_movie.close()
 
     # Export trajectory to vtf file
@@ -439,6 +438,8 @@ if __name__ == "__main__":
     5. non-bonded energy
     6. coulomb energy
     """
+
+    print("final time os =", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), file=info_file)
 
     # Export trajectory to vtf file
     fp = open("trajectory.vtf", mode="w+t")
