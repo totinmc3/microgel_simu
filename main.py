@@ -166,7 +166,7 @@ if __name__ == "__main__":
     while iter_warmup < warm_n_times:
         if iter_warmup % CHECKPOINT_PERIOD == 0:
             checkpoint.save()
-            fp_time.write( "\trun %d at time=%.0f \n" % (iter_warmup, system.time) )
+            fp_time.write("\trun %d at time=%.0f, local time=%s\n" % (iter_warmup, system.time, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         if (
             iter_warmup == TUNE_SET["i_val_1"] or iter_warmup == TUNE_SET["i_val_2"]
         ) and TUNE_SET["tune_bool"]:
@@ -438,9 +438,8 @@ if __name__ == "__main__":
     5. non-bonded energy
     6. coulomb energy
     """
-
-    print("final time os =", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), file=info_file)
-
+    with open(dir_name_var + "/system_info.txt", "a") as info_file:
+        print("final time os =", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), file=info_file)
     # Export trajectory to vtf file
     fp = open("trajectory.vtf", mode="w+t")
     # write structure block as header

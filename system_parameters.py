@@ -16,8 +16,8 @@ pKa = 4.0
 
 Nbeads_arm = 10
 cell_unit = 4 * (Nbeads_arm + 1) / np.sqrt(3)
-N_cat = 0   # number of cationic beads in microgel network
-N_an = 10   # number of anionic beads in microgel network
+#N_cat = 0   # number of cationic beads in microgel network
+#N_an = 10   # number of anionic beads in microgel network
 
 c_salt_molar = 0.0000    # salt concentration in molar #molar mol/l
 c_salt = c_salt_molar * conversion_factor * sigma**3      # salt-ion-pair concentration in units of sigma^3
@@ -66,7 +66,7 @@ P3M_PARAMS = {'prefactor': kBT * Bjerrum_length,
 
 # Warmup integration
 warm_steps = int(1.0/dt)
-warm_n_times = 30000
+warm_n_times = 40000
 warmup_loop = 1                     # number of warmup function iteractions (= calls)
 warmup_counter = 0                  # counter of warmup function calls
 energies_tot_warm_bool = True       # calculation of warmup energy
