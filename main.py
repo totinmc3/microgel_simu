@@ -31,7 +31,7 @@ def system_info(dir_name_var):
             file=info_file,
         )
         print(
-            "# number of anionic beads in microgel network = {:d}".format(N_an),
+            "# number of anionic beads in microgel network = {:d}".format(number_monomers*alpha_an),
             file=info_file,
         )
         print("initial time os =", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), file=info_file)
@@ -105,7 +105,6 @@ if __name__ == "__main__":
                 "# of chains = {:d}".format(int(number_monomers / Nbeads_arm)),
                 file=info_file,
             )
-
         # microgel.initialize_bonds()
         microgel.initialize_internoelec()
         if N_cat != 0 or N_an != 0:

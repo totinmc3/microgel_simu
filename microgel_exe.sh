@@ -11,7 +11,6 @@ LOGFILE="log.log"
 plabel="alpha_n" # etiqueta para el parámetro
 NPROCS=6 # Número de procesos MPI (puede cambiarse según necesidad)
 # Check if mpiexec exists
-#!/bin/bash
 
 # Verificar que mpiexec esté disponible
 command -v mpiexec &> /dev/null || {
@@ -28,7 +27,7 @@ PY_SCRIPT="/home/tobias/trabajo/geles/microgel_simu/main.py"
 plabel="alpha_n"
 LOGFILE="simu.log"
 
-for j in $(seq 0 0.1 0.9); do
+for j in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9; do
     echo "$plabel = $j"
     dir="${plabel}_$j"
     mkdir -p "$dir" && cd "$dir" || {
