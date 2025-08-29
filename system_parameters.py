@@ -8,14 +8,11 @@ conversion_factor = 6.02214/10 # If the density is in molar, multiplication by t
 sigma = 0.355               # sigma in nm for molar units
 # time: derived quantity
 density = 0.00005
-box_l = np.power(1480/density,1/3)                 # box size
+#box_l = np.power(1480/density,1/3)                 # box size
 dt = 0.01                   # time step
 skin = 0.4                  # skin of Verlet list
 pKa = 4.0
 
-
-Nbeads_arm = 10
-cell_unit = 4 * (Nbeads_arm + 1) / np.sqrt(3)
 N_cat = 0   # number of cationic beads in microgel network
 
 
@@ -88,8 +85,8 @@ TUNE_SKIN_PARAM = {'min_skin' : 0.1,
 
 # Density profiles
 ION_PROFILE_BOOL = True
-N_bins = int(box_l)
+#N_bins = int(box_l)
 
 # Checkpointing
 CHECK_NAME = "chk-res"
-CHECKPOINT_PERIOD = 500
+CHECKPOINT_PERIOD = 25

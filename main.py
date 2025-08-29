@@ -25,15 +25,6 @@ def system_info(dir_name_var):
         print("L = {:.2f}".format(box_l), file=info_file)
         print("kBT = {:.2f}".format(kBT), file=info_file)
         print("c_salt = {:.2f} Molar".format(c_salt_molar), file=info_file)
-        print("# beads per arm = {:d}".format(Nbeads_arm), file=info_file)
-        print(
-            "# number of cationic beads in microgel network = {:d}".format(N_cat),
-            file=info_file,
-        )
-        print(
-            "# number of anionic beads in microgel network = {:d}".format(number_monomers*alpha_an),
-            file=info_file,
-        )
         print("initial time os =", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), file=info_file)
 
 
@@ -51,11 +42,23 @@ if __name__ == "__main__":
     parser.add_argument(
         "alpha_an", metavar="alpha_an", type=float, help="anionic ionization degree"
     )
+    parser.add_argument(
+        "box_l", metavar="box_l", type=float, help="Box size in sigma units"
+    )
+    parser.add_argument(
+        "Nbeads_arm", metavar="Nbeads_arm", type=int, help="Number of beads per arm"
+    )
     # parser.add_argument('N_cat', metavar='N_cat', type=int, help='Number of cationic beads per microgel')
+    
     argm = parser.parse_args()
     
     alpha_an = argm.alpha_an
-    # N_cat = argm.N_cat
+    box_l = argm.box_l
+    nbeads_arm = argm.Nbeads_arm
+    N_cat = 0
+    N_an = 0 #luego cambia, sino no corre
+    cell_unit = 4 * (nbeads_arm + 1) / np.sqrt(3)
+    N_bins = int(box_l)
 
     dir_name_var = os.path.abspath(".") + "/"
     if not os.path.exists(dir_name_var):
@@ -79,14 +82,14 @@ if __name__ == "__main__":
             FENE_BOND_PARAMS,
             PART_TYPE,
             NONBOND_WCA_PARAMS,
-            Nbeads_arm,
+            nbeads_arm,
             cell_unit,
             N_cat,
             N_an,
             c_salt,
         )
         # number_crosslink, number_monomers = microgel.initialize_diamondLattice()
-        number_crosslink, number_monomers = microgel.initialize_from_file(Nbeads_arm)
+        number_crosslink, number_monomers = microgel.initialize_from_file(nbeads_arm)
         N_an = int(alpha_an * (number_crosslink + number_monomers))
         microgel.N_an = N_an
 
@@ -102,9 +105,18 @@ if __name__ == "__main__":
             )
             print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
             print(
-                "# of chains = {:d}".format(int(number_monomers / Nbeads_arm)),
+                "# of chains = {:d}".format(int(number_monomers / nbeads_arm)),
                 file=info_file,
             )
+            print(
+            "# number of cationic beads in microgel network = {:d}".format(N_cat),
+            file=info_file,
+        )
+            print(
+            "# number of anionic beads in microgel network = {:d}".format(0),
+            file=info_file,
+        )
+            print("# beads per arm = {:d}".format(nbeads_arm), file=info_file)
         # microgel.initialize_bonds()
         microgel.initialize_internoelec()
         if N_cat != 0 or N_an != 0:
@@ -165,6 +177,7 @@ if __name__ == "__main__":
     while iter_warmup < warm_n_times:
         if iter_warmup % CHECKPOINT_PERIOD == 0:
             checkpoint.save()
+            espressomd.io.writer.vtf.writevcf(system, fp_movie)
             fp_time.write("\trun %d at time=%.0f, local time=%s\n" % (iter_warmup, system.time, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         if (
             iter_warmup == TUNE_SET["i_val_1"] or iter_warmup == TUNE_SET["i_val_2"]
@@ -175,7 +188,7 @@ if __name__ == "__main__":
             system.time,
             system.analysis.energy()["total"],
         )
-        espressomd.io.writer.vtf.writevcf(system, fp_movie)
+
         iter_warmup += 1
         pbar.update(1)
 
@@ -446,3 +459,4 @@ if __name__ == "__main__":
     # write final positions as coordinate block
     espressomd.io.writer.vtf.writevcf(system, fp)
     fp.close()
+    checkpoint.save()
