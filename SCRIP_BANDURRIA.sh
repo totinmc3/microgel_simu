@@ -3,7 +3,7 @@
 
 declare -a Alpha_n=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9)
 
-declare -a Box_l=(309.33)
+declare -a Box_l=(309.33 389.73 491.04)
 b=${Box_l[0]}
 
 declare -a NBeads=(10 20 40)
@@ -38,7 +38,7 @@ do
 	cat script_aux.in | sed s/BOX/${Box_l[0]}/ > sub_script.sh
 
 	cat sub_script.sh | sed s/NBEADS/$j/ > script_aux.in
-	
+
 	mv script_aux.in sub_script.sh
 
 	#rm  script_aux.in
