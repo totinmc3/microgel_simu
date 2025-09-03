@@ -9,7 +9,7 @@ b=${Box_l[0]}
 declare -a NBeads=(10 20 40)
 j=${NBeads[0]}
 
-for k in 0 1 2 "${!Alpha_n[@]}"
+for k in 1 2 3 4 5 6 7 8 9;
 do
 	cd /home/tobias/trabajo/resultados
 
@@ -29,22 +29,25 @@ do
 
 
 	echo Alpha_${Alpha_n[k]}
-	echo Box_length_${Box_l[0]}
+	echo Box_length_$b
 	
 	pwd
 
 	cat /home/tobias/trabajo/geles/microgel_simu/AN_BOX.sh | sed "s/ALPHA/${Alpha_n[k]}/" > script_aux.in
 
-	cat script_aux.in | sed s/BOX/${Box_l[0]}/ > sub_script.sh
+
+	cat script_aux.in | sed s/BOX/$b/ > sub_script.sh
+
 
 	cat sub_script.sh | sed s/NBEADS/$j/ > script_aux.in
 
+
 	mv script_aux.in sub_script.sh
+
 
 	#rm  script_aux.in
 
 	#qsub ./sub_script.sh
 	chmod +x sub_script.sh
-	. sub_script.sh &
 done
 

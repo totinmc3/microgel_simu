@@ -168,8 +168,6 @@ if __name__ == "__main__":
     # Warmup --------------------------------------------------------------------------
     print("Warmup integration")  # it appears just the first time the function is called
 
-    fp_movie = open("trajectory_movie.vtf", mode="w+t")
-    espressomd.io.writer.vtf.writevsf(system, fp_movie)
 
     fp_time = open("tiempo_iteraciones.dat", mode="w+t")
 
@@ -177,7 +175,6 @@ if __name__ == "__main__":
     while iter_warmup < warm_n_times:
         if iter_warmup % CHECKPOINT_PERIOD == 0:
             checkpoint.save()
-            espressomd.io.writer.vtf.writevcf(system, fp_movie)
             fp_time.write("\trun %d at time=%.0f, local time=%s\n" % (iter_warmup, system.time, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         if (
             iter_warmup == TUNE_SET["i_val_1"] or iter_warmup == TUNE_SET["i_val_2"]
@@ -195,7 +192,6 @@ if __name__ == "__main__":
     checkpoint.save()
     pbar.close()
     fp_time.close()
-    fp_movie.close()
 
     # Export trajectory to vtf file
     fp_0 = open("trajectory_0.vtf", mode="w+t")
@@ -343,16 +339,7 @@ if __name__ == "__main__":
                 )
                 microionProfile_anions += obs_data
                 # Whole microgel
-                obs_data, obs_bins = dp.particle_density_profile(
-                    system,
-                    [
-                        PART_TYPE["polymer_arm"],
-                        PART_TYPE["crosslinker"],
-                        PART_TYPE["cation"],
-                        PART_TYPE["anion"],
-                    ],
-                    N_bins,
-                )
+
                 microgelProfile_anions += obs_data
     if ION_PROFILE_BOOL:  # tranformation from cartesian to spherical coordinates
         prof_list = [

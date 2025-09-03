@@ -63,7 +63,7 @@ P3M_PARAMS = {'prefactor': kBT * Bjerrum_length,
 
 # Warmup integration
 warm_steps = int(1.0/dt)
-warm_n_times = 40000
+warm_n_times = 50000
 warmup_loop = 1                     # number of warmup function iteractions (= calls)
 warmup_counter = 0                  # counter of warmup function calls
 energies_tot_warm_bool = True       # calculation of warmup energy
