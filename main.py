@@ -188,8 +188,6 @@ if __name__ == "__main__":
 
         iter_warmup += 1
         pbar.update(1)
-
-    checkpoint.save()
     pbar.close()
     fp_time.close()
 
@@ -446,4 +444,3 @@ if __name__ == "__main__":
     # write final positions as coordinate block
     espressomd.io.writer.vtf.writevcf(system, fp)
     fp.close()
-    checkpoint.save()

@@ -1,0 +1,4 @@
+L = 309.33
+kBT = 1.00
+c_salt = 0.00 Molar
+initial time os = 2025-09-03 16:39:52
