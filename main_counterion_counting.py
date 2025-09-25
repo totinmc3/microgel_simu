@@ -1,34 +1,48 @@
 import numpy as np
+from numpy import linalg as LA, number, string_
 import argparse
 import os
+import itertools
 import math
 from tqdm import tqdm
 
 import espressomd
+from espressomd import electrostatics
 from espressomd.interactions import *
+from espressomd import polymer
+from espressomd.interactions import FeneBond
+from espressomd.electrostatics import P3M
+# from espressomd import visualization
+from espressomd.pair_criteria import DistanceCriterion
+from espressomd.cluster_analysis import ClusterStructure
 import espressomd.io.writer.vtf
 from espressomd import checkpointing
+from espressomd import MDA_ESP
 
 from system_parameters import *
 from microgel_class import microgel_object
 from handling import handler
 from analysis import densityProfile_calc as dp
+from analysis import part_counter as pc
 from analysis import com as com_mod
-from datetime import datetime
+import microgel_class.read_vtf_file as read_vtf
+import MDAnalysis as mda
+from MDAnalysis.coordinates.XTC import XTCWriter
 
-
+if ION_PROFILE_BOOL:
+    N_bins = int(box_l) #  number of bins of calculation of ion profile in cartesion coord
 HAS_A_CHECKPOINT = os.path.exists(CHECK_NAME)
-
 
 def system_info(dir_name_var):
     with open(dir_name_var + "/system_info.txt", "w") as info_file:
         print("L = {:.2f}".format(box_l), file=info_file)
         print("kBT = {:.2f}".format(kBT), file=info_file)
-        print("c_salt = {:.2f} Molar".format(c_salt_molar), file=info_file)
-        print("initial time os =", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), file=info_file)
+        print("c_salt = {:.6f} Molar".format(c_salt_molar), file=info_file)
+        print("# beads per arm = {:d}".format(Nbeads_arm), file=info_file)
+        print("# number of cationic beads in microgel network = {:d}".format(N_cat), file=info_file)   
+        print("# number of anionic beads in microgel network = {:d}".format(N_an), file=info_file)   
 
 
-        
 ###########################################################################################
 ###################                                                     ###################
 #############################             MAIN           ##################################
@@ -37,177 +51,83 @@ def system_info(dir_name_var):
 if __name__ == "__main__":
     print("System initialization")
 
-    parser = argparse.ArgumentParser(description="Process running parameters.")
-    # parser.add_argument('N_an', metavar='N_an', type=int, help='Number of anionic beads per microgel')
-    parser.add_argument(
-        "alpha_an", metavar="alpha_an", type=float, help="anionic ionization degree"
-    )
-    parser.add_argument(
-        "box_l", metavar="box_l", type=float, help="Box size in sigma units"
-    )
-    parser.add_argument(
-        "Nbeads_arm", metavar="Nbeads_arm", type=int, help="Number of beads per arm"
-    )
-    # parser.add_argument('N_cat', metavar='N_cat', type=int, help='Number of cationic beads per microgel')
-    
+    parser = argparse.ArgumentParser(description='Process running parameters.')
+    parser.add_argument('vtf_file', metavar='vtf_file', type=str, help='VTF file')
     argm = parser.parse_args()
-    
-    alpha_an = argm.alpha_an
-    box_l = argm.box_l
-    nbeads_arm = argm.Nbeads_arm
-    N_cat = 0
-    N_an = 0 #luego cambia, sino no corre
-    cell_unit = 4 * (nbeads_arm + 1) / np.sqrt(3)
-    N_bins = int(box_l)
 
-    dir_name_var = os.path.abspath(".") + "/"
+    vtf_file = argm.vtf_file
+    print('{vtf_file=}')
+
+    dir_name_var = os.path.abspath('.') + '/'
     if not os.path.exists(dir_name_var):
         os.mkdir(dir_name_var)
 
-    if not HAS_A_CHECKPOINT:
-        ##### creating checkpointing
-        checkpoint = checkpointing.Checkpoint(
-            checkpoint_id=CHECK_NAME, checkpoint_path="."
-        )
+    box_l,ids,types,bonds,positions = read_vtf.read_vtf_file(vtf_file)
 
-        system_info(dir_name_var)
+    system = espressomd.System(box_l=box_l)
+    system.periodicity = [True, True, True]
+    system.time_step = dt
+    system.cell_system.skin = skin
 
-        system = espressomd.System(box_l=[box_l, box_l, box_l])
-        system.periodicity = [True, True, True]
-        system.time_step = dt
-        system.cell_system.skin = skin
+    charges = np.zeros_like(types, dtype=int)
+    charges[types==PART_TYPE['cation']] = 1
+    charges[types==PART_TYPE['ion_cat']] = 1
+    charges[types==PART_TYPE['anion']] = -1
+    charges[types==PART_TYPE['ion_an']] = -1
 
-        microgel = microgel_object.Microgel(
-            system,
-            FENE_BOND_PARAMS,
-            PART_TYPE,
-            NONBOND_WCA_PARAMS,
-            nbeads_arm,
-            cell_unit,
-            N_cat,
-            N_an,
-            c_salt,
-        )
-        # number_crosslink, number_monomers = microgel.initialize_diamondLattice()
-        number_crosslink, number_monomers = microgel.initialize_from_file(nbeads_arm)
-        N_an = int(alpha_an * (number_crosslink + number_monomers))
-        microgel.N_an = N_an
+    system.part.add(id=ids, pos=positions[:, 1:], type=types, q=charges)
 
-        # gyr_tens = system.analysis.gyration_tensor(p_type=[PART_TYPE['crosslinker'], PART_TYPE['polymer_arm']])
-        # shape_list = gyr_tens["shape"]
-        # print('%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e\t%.5e' % (
-        #         gyr_tens["Rg^2"], shape_list[0], shape_list[1], shape_list[2], gyr_tens["eva0"][0], gyr_tens["eva1"][0], gyr_tens["eva2"][0]),
-        #         file = open(dir_name_var + "gyration_tensor.dat", "a"))
+    fene = FeneBond(**FENE_BOND_PARAMS)
+    system.bonded_inter.add(fene)
 
-        with open(dir_name_var + "system_info.txt", "a") as info_file:
-            print(
-                "# of polymer monomers = {:d}".format(number_monomers), file=info_file
-            )
-            print("# of crosslinkers = {:d}".format(number_crosslink), file=info_file)
-            print(
-                "# of chains = {:d}".format(int(number_monomers / nbeads_arm)),
-                file=info_file,
-            )
-            print(
-            "# number of cationic beads in microgel network = {:d}".format(N_cat),
-            file=info_file,
-        )
-            print(
-            "# number of anionic beads in microgel network = {:d}".format(0),
-            file=info_file,
-        )
-            print("# beads per arm = {:d}".format(nbeads_arm), file=info_file)
-        # microgel.initialize_bonds()
-        microgel.initialize_internoelec()
-        if N_cat != 0 or N_an != 0:
-            microgel.charge_beads_homo()
-            # microgel.charge_beads_shell()
+    for bond in bonds:
+        system.part[bond[0]].add_bond((fene, bond[1]))
 
-        if c_salt != 0:
-            print("Add salt to the system")
-            N_salt_ion_pairs = microgel.add_salt()
-            with open(dir_name_var + "system_info.txt", "a") as info_file:
-                print(
-                    "# of salt anions = {:d}".format(N_salt_ion_pairs), file=info_file
-                )
-                print(
-                    "# of salt cations = {:d}".format(N_salt_ion_pairs), file=info_file
-                )
+    print("Define interactions (non electrostatic)")
+    # Non-bonded Interactions:
+    for i,j in itertools.combinations_with_replacement([x for x in PART_TYPE], 2):
+        system.non_bonded_inter[PART_TYPE[i], PART_TYPE[j]].wca.set_params(**NONBOND_WCA_PARAMS)
 
-        handler.remove_overlap(system, STEEPEST_DESCENT_PARAMS)
+    # center particles in the middle of simulation box
+    com_vec = com_mod.com_calculation(system, PART_TYPE['polymer_arm'],PART_TYPE['cation'], PART_TYPE['anion'])
+    diff = com_vec - system.box_l/2.
+    system.part[:].pos -= diff
 
-        if N_cat != 0 or N_an != 0:
-            handler.initialize_elec(system, P3M_PARAMS)
+    handler.remove_overlap(system,STEEPEST_DESCENT_PARAMS)
 
-        fp_ic = open("trajectory_init_cond.vtf", mode="w+t")
-        espressomd.io.writer.vtf.writevsf(system, fp_ic)
-        espressomd.io.writer.vtf.writevcf(system, fp_ic)
-        fp_ic.close()
+    N_an = len(system.part.select(type=PART_TYPE['anion']))
+    N_cat = len(system.part.select(type=PART_TYPE['cation']))
+    if N_cat != 0 or N_an !=0:
+            handler.initialize_elec(system,P3M_PARAMS)
 
-        system.thermostat.set_langevin(**LANGEVIN_PARAMS)
-
-        system.time = 0
-
-        iter_warmup = 0
-
-        energies_tot_warm = np.zeros((warm_n_times, 2))
-
-        checkpoint.register("system")
-        checkpoint.register("dir_name_var")
-        checkpoint.register("iter_warmup")
-        checkpoint.register("energies_tot_warm")
-
-    elif HAS_A_CHECKPOINT:
-        checkpoint = checkpointing.Checkpoint(
-            checkpoint_id=CHECK_NAME, checkpoint_path="."
-        )
-        checkpoint.load()
-
-        print("Loaded checkpoint.\n")
-
-    # Warmup --------------------------------------------------------------------------
-    print("Warmup integration")  # it appears just the first time the function is called
+    system.thermostat.set_langevin(**LANGEVIN_PARAMS)
+    system.time = 0
 
 
-    fp_time = open("tiempo_iteraciones.dat", mode="w+t")
-
-    pbar = tqdm(desc="Warmup loop", total=warm_n_times)
-    while iter_warmup < warm_n_times:
-        if iter_warmup % CHECKPOINT_PERIOD == 0:
-            checkpoint.save()
-            fp_time.write("\trun %d at time=%.0f, local time=%s\n" % (iter_warmup, system.time, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        if (
-            iter_warmup == TUNE_SET["i_val_1"] or iter_warmup == TUNE_SET["i_val_2"]
-        ) and TUNE_SET["tune_bool"]:
-            system.cell_system.tune_skin(**TUNE_SKIN_PARAM)
+    print("Short warmup integration") # it appears just the first time the function is called
+    iter_warmup = 0
+    short_warm_n_times = 100
+    pbar = tqdm(desc='Warmup loop', total=short_warm_n_times)
+    while (iter_warmup < short_warm_n_times):
         system.integrator.run(warm_steps)  # Default: velocity Verlet algorithm
-        energies_tot_warm[iter_warmup] = (
-            system.time,
-            system.analysis.energy()["total"],
-        )
-
+        print("\r\trun %d at time=%.0f " % (iter_warmup, system.time), end='')
         iter_warmup += 1
         pbar.update(1)
+
     pbar.close()
-    fp_time.close()
 
     # Export trajectory to vtf file
-    fp_0 = open("trajectory_0.vtf", mode="w+t")
+    fp_0 = open('trajectory_0.vtf', mode='w+t')
     espressomd.io.writer.vtf.writevsf(system, fp_0)
     espressomd.io.writer.vtf.writevcf(system, fp_0)
     fp_0.close()
+   
+    print("\nEnd short warmup")
 
-    print("\nEnd warmup")
-
-    # save energy
-    string1 = dir_name_var + "/TotEner_warmup.dat"
-    np.savetxt(
-        string1,
-        np.column_stack((energies_tot_warm[:, 0], energies_tot_warm[:, 1])),
-        fmt="%.5e",
-        delimiter="\t",
-    )
-    # ----------------------------------------------------------------------------------
+    print("Tune skin")
+    system.cell_system.tune_skin(**TUNE_SKIN_PARAM)
+    
+    #----------------------------------------------------------------------------------
 
     energies_tot = np.zeros((int_n_times*int_uncorr_times, 2))
     energies_kin = np.zeros((int_n_times*int_uncorr_times, 2))
@@ -361,3 +281,7 @@ if __name__ == "__main__":
     espressomd.io.writer.vtf.writevsf(system, fp)
     # write final positions as coordinate block
     espressomd.io.writer.vtf.writevcf(system, fp)
+
+    # # visualizer = visualization.openGLLive(system)
+    # # visualizer.run()
+    # # # visualizer.screenshot("results/screenshot_finconfig.png")

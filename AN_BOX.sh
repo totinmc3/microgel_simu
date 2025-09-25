@@ -8,5 +8,4 @@
 # execute by: $ ./microgel_exe.sh <p> <proc_iter>
 
 
-mpiexec -n 6 /home/tobias/trabajo/espresso_md/espresso/build/pypresso /home/tobias/trabajo/geles/microgel_simu/main.py ALPHA BOX NBEADS
-exit
+mpiexec -n 4 /home/tobias/espresso_md/espresso/build/pypresso /home/tobias/trabajo/microgel_simu/main.py ALPHA BOX NBEADS
